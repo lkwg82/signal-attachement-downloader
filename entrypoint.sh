@@ -6,4 +6,4 @@ if [[ -z $USERNAME ]]; then
   exit 1
 fi
 
-signal-cli -u${USERNAME} -o json receive -t -1
+signal-cli -u"${USERNAME}" -o json receive -t -1
