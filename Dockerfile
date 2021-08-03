@@ -5,3 +5,8 @@ RUN curl -sSL https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CL
 RUN ls
 ENV PATH=signal-cli-${SIGNAL_CLI_VERSION}/bin:$PATH
 RUN signal-cli -v # selftest
+
+ADD entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
