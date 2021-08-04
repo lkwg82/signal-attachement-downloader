@@ -1,16 +1,14 @@
 package de.lgohlke.signal.attachmentdownloader.mapping;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
 import java.sql.Timestamp;
 
-@Getter
-@ToString
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Envelope {
-    private DataMessage dataMessage;
-    private String source;
+public class Envelope {
+    private DataMessage dataMessage = new DataMessage();
+    private String source = "unknown";
     private Timestamp timestamp;
 }
