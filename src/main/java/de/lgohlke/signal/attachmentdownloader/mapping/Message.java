@@ -7,6 +7,6 @@ import lombok.ToString;
 @Getter
 @ToString
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Message {
+public class Message {
     private Envelope envelope;
 }
