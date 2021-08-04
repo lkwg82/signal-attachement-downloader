@@ -1,13 +1,11 @@
 package de.lgohlke.signal.attachmentdownloader.mapping;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
-@Getter
-@ToString
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-class Attachment {
+public class Attachment {
     private String filename;
     private long id;
     private int size;

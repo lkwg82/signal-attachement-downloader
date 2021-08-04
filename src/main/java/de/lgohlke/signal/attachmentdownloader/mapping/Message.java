@@ -1,12 +1,10 @@
 package de.lgohlke.signal.attachmentdownloader.mapping;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.Data;
 
-@Getter
-@ToString
+@Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Message {
-    private Envelope envelope;
+    private Envelope envelope = new Envelope();
 }
