@@ -11,11 +11,16 @@ import java.nio.charset.StandardCharsets;
 public class StdinDelegatorTest {
     @Test
     void should_ignore_not_valid_json() throws IOException {
-        var input = "test";
+        getDelegator("test").handle();
+    }
+
+    @Test
+    void should_handle_valid_json() throws IOException {
+        getDelegator("{\"envelope\":{}}}").handle();
+    }
+
+    private StdinDelegator getDelegator(String input) {
         var inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-
-        var delegator = new StdinDelegator(inputStream);
-
-        delegator.handle();
+        return new StdinDelegator(inputStream);
     }
 }
