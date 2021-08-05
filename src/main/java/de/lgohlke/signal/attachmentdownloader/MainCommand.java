@@ -19,6 +19,6 @@ public class MainCommand implements Runnable {
 
         log.info("starting reading from stdin ...");
         log.info("search in " + attachmentDir + " for attachments");
-        new StdinDelegator(System.in).handle();
+        new StdinDelegator(System.in, null).handle();
     }
 }

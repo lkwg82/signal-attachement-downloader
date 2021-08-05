@@ -1,11 +1,14 @@
 package de.lgohlke.signal.attachmentdownloader;
 
+import de.lgohlke.signal.attachmentdownloader.mapping.Message;
 import io.quarkus.test.junit.QuarkusTest;
+import lombok.val;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 @QuarkusTest
 public class StdinDelegatorTest {
@@ -21,6 +24,12 @@ public class StdinDelegatorTest {
 
     private StdinDelegator getDelegator(String input) {
         var inputStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
-        return new StdinDelegator(inputStream);
+        val attachmentMover = new AttachmentMover(Path.of("/tmp"), Path.of("dummy")) {
+            @Override
+            public void handle(Message message) throws IOException {
+                // ok
+            }
+        };
+        return new StdinDelegator(inputStream, attachmentMover);
     }
 }
