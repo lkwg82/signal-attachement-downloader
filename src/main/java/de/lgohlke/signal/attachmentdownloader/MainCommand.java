@@ -11,7 +11,7 @@ import java.nio.file.Path;
 public class MainCommand implements Runnable {
     @CommandLine.Option(names = {"-d", "--signal-attachment-dir"}, description = "location of attachments of signal-cli", defaultValue = "$HOME/.local/share/signal-cli/attachments")
     private String signalAttachmentDirectory;
-    @CommandLine.Option(names = {"-t", "--moved-attachment-dir"}, description = "location of attachments to moved to", required = true)
+    @CommandLine.Option(names = {"-t", "--moved-attachment-dir"}, description = "location of attachments to be moved to", required = true)
     private String movedAttachmentDir;
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
     private boolean helpRequested;
