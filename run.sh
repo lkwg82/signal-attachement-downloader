@@ -7,6 +7,7 @@ docker build -t signal-cli docker/signal-cli
 docker build --target=builder -t attachment-mover -f docker/attachment-mover/Dockerfile .
 docker run --rm -ti \
   -v "$PWD/.m2":/src/.m2 \
+  -v "$PWD/target-c":/src/target \
   attachment-mover \
   mvn -Dmaven.repo.local=.m2 verify -P native
 exit
