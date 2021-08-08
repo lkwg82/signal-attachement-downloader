@@ -25,6 +25,7 @@ import static org.assertj.core.api.Fail.fail;
 public class AttachmentMoverTest {
 
     private final File tempFolder = Files.newTemporaryFolder();
+    private final Message message = createTestMessage();
 
     @BeforeEach
     void setUp() {
@@ -33,25 +34,10 @@ public class AttachmentMoverTest {
 
     @Test
     void should_move_attachment_from_direct_message() throws IOException {
-        Message message = createTestMessage();
-        assertThat(message.getEnvelope()
-                          .getDataMessage()
-                          .getGroupInfo()).isNull();
-
         var attachmentsOfSignal = prepareSignalAttachmentPath();
         var attachmentsMoved = prepareMovedAttachmentPath();
-        var attachment = createTestAttachment(attachmentsOfSignal, message);
 
-
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
-        var timestamp = message.getEnvelope()
-                               .getDataMessage()
-                               .getTimestamp();
-
-        var filename = dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
-        var movedAttachment = attachmentsMoved.resolve("sourceA")
-                                              .resolve(filename)
-                                              .toFile();
+        var movedAttachment = buildMovedAttachmentFile(message, attachmentsOfSignal, attachmentsMoved);
 
         // action
         new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
@@ -62,42 +48,27 @@ public class AttachmentMoverTest {
 
     @Test
     void should_accept_already_moved_attachment() throws IOException {
-        Message message = createTestMessage();
-        assertThat(message.getEnvelope()
-                          .getDataMessage()
-                          .getGroupInfo()).isNull();
-
         var attachmentsOfSignal = prepareSignalAttachmentPath();
         var attachmentsMoved = prepareMovedAttachmentPath();
         var attachment = createTestAttachment(attachmentsOfSignal, message);
 
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
-        var timestamp = message.getEnvelope()
-                               .getDataMessage()
-                               .getTimestamp();
-
-        var filename = dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
-        var movedAttachment = attachmentsMoved.resolve("sourceA")
+        String filename = buildMovedFilename(message, attachment);
+        var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
+                                                              .getSource())
                                               .resolve(filename)
                                               .toFile();
 
-
-        var sourcePath = attachmentsOfSignal.resolve(attachment.getId() + "");
-        movedAttachment.getParentFile()
-                       .mkdirs();
-        java.nio.file.Files.move(sourcePath, movedAttachment.toPath());
+        moveAttachmentToMovedFolder(attachmentsOfSignal, attachment, movedAttachment);
 
         // action
         new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
 
         assertThat(movedAttachment).exists();
-        assertThat(sourcePath).doesNotExist();
         assertThat(movedAttachment).isFile();
     }
 
     @Test
     void should_move_attachment_from_group_message() throws IOException {
-        Message message = createTestMessage();
         var groupInfo = new GroupInfo();
         groupInfo.setGroupId("asdas/dasd");
         groupInfo.setType("DELIVER");
@@ -109,67 +80,13 @@ public class AttachmentMoverTest {
         var attachmentsMoved = prepareMovedAttachmentPath();
         var attachment = createTestAttachment(attachmentsOfSignal, message);
 
-
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
-        var timestamp = message.getEnvelope()
-                               .getDataMessage()
-                               .getTimestamp();
-
-        var filename = dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
-        var base64GroupId = Base64.getEncoder()
-                                  .encodeToString(groupInfo.getGroupId()
-                                                           .getBytes(StandardCharsets.UTF_8));
-        var movedAttachment = attachmentsMoved.resolve("groups")
-                                              .resolve(base64GroupId)
-                                              .resolve("sourceA")
-                                              .resolve(filename)
-                                              .toFile();
+        var movedAttachment = buildMovedAttachmentFileForGroup(groupInfo, attachmentsMoved, attachment);
 
         // action
         new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
 
         assertThat(movedAttachment).exists();
         assertThat(movedAttachment).isFile();
-    }
-
-    private Path prepareMovedAttachmentPath() {
-        return tempFolder.toPath()
-                         .resolve("new_attachments");
-    }
-
-    private Path prepareSignalAttachmentPath() {
-        var attachmentsOfSignal = tempFolder.toPath()
-                                            .resolve("attachments");
-        attachmentsOfSignal.toFile()
-                           .mkdirs();
-        return attachmentsOfSignal;
-    }
-
-    private Attachment createTestAttachment(Path attachmentsOfSignal, Message message) throws IOException {
-        var attachment = new Attachment();
-        attachment.setFilename("IMG_01.jpg");
-        attachment.setId(3149734190872347104L);
-        var attachmentFile = attachmentsOfSignal.resolve(attachment.getId() + "")
-                                                .toFile();
-        attachmentFile.createNewFile();
-
-        var dataMessage = message.getEnvelope()
-                                 .getDataMessage();
-        dataMessage.setAttachments(List.of(attachment));
-        dataMessage.setTimestamp(new Timestamp(1628069823084L));
-
-        return attachment;
-    }
-
-    private Message createTestMessage() throws IOException {
-        var message = new Message();
-        var envelope = new Envelope();
-        envelope.setSource("sourceA");
-        var dataMessage = new DataMessage();
-
-        envelope.setDataMessage(dataMessage);
-        message.setEnvelope(envelope);
-        return message;
     }
 
     @Test
@@ -228,4 +145,88 @@ public class AttachmentMoverTest {
         }
     }
 
+    private File buildMovedAttachmentFile(Message message, Path attachmentsOfSignal, Path attachmentsMoved) throws IOException {
+        var attachment = createTestAttachment(attachmentsOfSignal, message);
+        String filename = buildMovedFilename(message, attachment);
+        var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
+                                                              .getSource())
+                                              .resolve(filename)
+                                              .toFile();
+        return movedAttachment;
+    }
+
+    private void moveAttachmentToMovedFolder(Path attachmentsOfSignal, Attachment attachment, File movedAttachment) throws IOException {
+        var sourcePath = attachmentsOfSignal.resolve(attachment.getId() + "");
+        movedAttachment.getParentFile()
+                       .mkdirs();
+        java.nio.file.Files.move(sourcePath, movedAttachment.toPath());
+        assertThat(sourcePath).doesNotExist();
+    }
+
+    private String buildMovedFilename(Message message, Attachment attachment) {
+        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
+        var timestamp = message.getEnvelope()
+                               .getDataMessage()
+                               .getTimestamp();
+
+        return dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
+    }
+
+    private Path prepareMovedAttachmentPath() {
+        return tempFolder.toPath()
+                         .resolve("new_attachments");
+    }
+
+    private Path prepareSignalAttachmentPath() {
+        var attachmentsOfSignal = tempFolder.toPath()
+                                            .resolve("attachments");
+        attachmentsOfSignal.toFile()
+                           .mkdirs();
+        return attachmentsOfSignal;
+    }
+
+    private Attachment createTestAttachment(Path attachmentsOfSignal, Message message) throws IOException {
+        var attachment = new Attachment();
+        attachment.setFilename("IMG_01.jpg");
+        attachment.setId(3149734190872347104L);
+        var attachmentFile = attachmentsOfSignal.resolve(attachment.getId() + "")
+                                                .toFile();
+        attachmentFile.createNewFile();
+
+        var dataMessage = message.getEnvelope()
+                                 .getDataMessage();
+        dataMessage.setAttachments(List.of(attachment));
+        dataMessage.setTimestamp(new Timestamp(1628069823084L));
+
+        return attachment;
+    }
+
+    private Message createTestMessage() {
+        var message = new Message();
+        var envelope = new Envelope();
+        envelope.setSource("sourceA");
+        var dataMessage = new DataMessage();
+
+        envelope.setDataMessage(dataMessage);
+        message.setEnvelope(envelope);
+
+        assertThat(message.getEnvelope()
+                          .getDataMessage()
+                          .getGroupInfo()).isNull();
+
+        return message;
+    }
+
+    private File buildMovedAttachmentFileForGroup(GroupInfo groupInfo, Path attachmentsMoved, Attachment attachment) {
+        String filename = buildMovedFilename(message, attachment);
+        var base64GroupId = Base64.getEncoder()
+                                  .encodeToString(groupInfo.getGroupId()
+                                                           .getBytes(StandardCharsets.UTF_8));
+        var movedAttachment = attachmentsMoved.resolve("groups")
+                                              .resolve(base64GroupId)
+                                              .resolve("sourceA")
+                                              .resolve(filename)
+                                              .toFile();
+        return movedAttachment;
+    }
 }
