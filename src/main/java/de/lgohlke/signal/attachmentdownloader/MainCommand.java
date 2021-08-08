@@ -16,6 +16,9 @@ public class MainCommand implements Runnable {
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
     private boolean helpRequested;
 
+    @CommandLine.Option(names = {"--debug"}, description = "show additional debug messages")
+    private boolean showDebugInfos;
+
     @SneakyThrows
     @Override
     public void run() {
@@ -24,6 +27,8 @@ public class MainCommand implements Runnable {
         log.info("starting reading from stdin ...");
         log.info("search in " + signalAttachmentDirectory + " for attachments");
         var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory), Path.of(movedAttachmentDir));
-        new StdinDelegator(System.in, attachmentMover).handle();
+        var stdinDelegator = new StdinDelegator(System.in, attachmentMover);
+        stdinDelegator.setDebug(showDebugInfos);
+        stdinDelegator.handle();
     }
 }
