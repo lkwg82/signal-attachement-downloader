@@ -22,7 +22,21 @@ RUN find | xargs -P100 -n1 chmod 0755
 
 FROM adoptopenjdk:16-jre-openj9
 
-RUN adduser --uid 1000  user
+#
+# signal-cli
+#
+ARG SIGNAL_CLI_VERSION=0.8.4.1
+
+RUN curl -sSL https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz | tar -xvzf -
+RUN ls
+ENV PATH=/signal-cli-${SIGNAL_CLI_VERSION}/bin:$PATH
+RUN signal-cli -v # selftest
+
+#
+# attachment-mover
+#
+
+RUN useradd --uid 1000  user
 
 WORKDIR /app
 
@@ -31,9 +45,12 @@ COPY --from=builder /build/target/quarkus-app/quarkus quarkus
 COPY --from=builder /build/target/quarkus-app/lib lib
 COPY --from=builder /build/target/quarkus-app/app app
 
+ADD docker/attachment-mover-java/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 USER user
 
 # selftest
 RUN java -jar quarkus-run.jar -h
 
-ENTRYPOINT ["java","-jar","quarkus-run.jar"]
+ENTRYPOINT ["/entrypoint.sh"]
