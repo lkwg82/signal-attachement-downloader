@@ -81,13 +81,19 @@ public class AttachmentMover {
 
             var parent = targetFile.getParent();
             if (!parent.toFile()
-                       .mkdirs()) {
+                       .exists() && !parent.toFile()
+                                           .mkdirs()) {
                 throw new IllegalStateException("failed to create sender source directory:" + parent);
             }
 
             try {
-                java.nio.file.Files.move(sourceFile, targetFile);
-                log.info("moved " + sourceFile + " to " + targetFile);
+                if (targetFile.toFile()
+                              .exists()) {
+                    log.info("already moved " + sourceFile + " to " + targetFile);
+                } else {
+                    java.nio.file.Files.move(sourceFile, targetFile);
+                    log.info("moved " + sourceFile + " to " + targetFile);
+                }
             } catch (IOException e) {
                 log.error("could not move " + sourceFile + " to " + targetFile);
                 throw e;
@@ -96,17 +102,14 @@ public class AttachmentMover {
     }
 
     private Path buildAttachmentsMovedPath(DataMessage dataMessage) {
-        Path attachmentsMovedPath;
         var groupInfo = dataMessage.getGroupInfo();
         if (groupInfo == null) {
-            attachmentsMovedPath = attachmentsMoved;
-        } else {
-            var base64GroupId = Base64.getEncoder()
-                                      .encodeToString(groupInfo.getGroupId()
-                                                               .getBytes(StandardCharsets.UTF_8));
-            attachmentsMovedPath = attachmentsMoved.resolve("groups")
-                                                   .resolve(base64GroupId);
+            return attachmentsMoved;
         }
-        return attachmentsMovedPath;
+        var base64GroupId = Base64.getEncoder()
+                                  .encodeToString(groupInfo.getGroupId()
+                                                           .getBytes(StandardCharsets.UTF_8));
+        return attachmentsMoved.resolve("groups")
+                               .resolve(base64GroupId);
     }
 }

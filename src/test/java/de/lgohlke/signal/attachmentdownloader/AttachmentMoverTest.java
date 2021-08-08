@@ -61,6 +61,41 @@ public class AttachmentMoverTest {
     }
 
     @Test
+    void should_accept_already_moved_attachment() throws IOException {
+        Message message = createTestMessage();
+        assertThat(message.getEnvelope()
+                          .getDataMessage()
+                          .getGroupInfo()).isNull();
+
+        var attachmentsOfSignal = prepareSignalAttachmentPath();
+        var attachmentsMoved = prepareMovedAttachmentPath();
+        var attachment = createTestAttachment(attachmentsOfSignal, message);
+
+        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
+        var timestamp = message.getEnvelope()
+                               .getDataMessage()
+                               .getTimestamp();
+
+        var filename = dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
+        var movedAttachment = attachmentsMoved.resolve("sourceA")
+                                              .resolve(filename)
+                                              .toFile();
+
+
+        var sourcePath = attachmentsOfSignal.resolve(attachment.getId() + "");
+        movedAttachment.getParentFile()
+                       .mkdirs();
+        java.nio.file.Files.move(sourcePath, movedAttachment.toPath());
+
+        // action
+        new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
+
+        assertThat(movedAttachment).exists();
+        assertThat(sourcePath).doesNotExist();
+        assertThat(movedAttachment).isFile();
+    }
+
+    @Test
     void should_move_attachment_from_group_message() throws IOException {
         Message message = createTestMessage();
         var groupInfo = new GroupInfo();
