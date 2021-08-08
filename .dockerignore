@@ -1,3 +1,5 @@
 target/
+!target/quarkus-app
+!target/app
 .m2
 .mvn
