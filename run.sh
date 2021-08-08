@@ -3,6 +3,12 @@
 set -e
 
 docker build -t signal-cli docker/signal-cli
+# selftest
+docker run --rm -ti signal-cli -v >/dev/null
+
+docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
+# selftest
+docker run --rm -ti attachment-mover-java -h >/dev/null
 
 # binary not working, dont know why :(
 #docker build --target=builder -t attachment-mover -f docker/attachment-mover/Dockerfile .
@@ -20,9 +26,8 @@ docker build -t signal-cli docker/signal-cli
 #  docker build --target=release -t attachment-mover -f docker/attachment-mover/Dockerfile .
 #  docker run --rm -ti attachment-mover -h
 #else
-mvn clean verify
-java -jar target/quarkus-app/quarkus-run.jar -h
-docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
+#mvn clean verify
+#java -jar target/quarkus-app/quarkus-run.jar -h
 #fi
 
 exit
