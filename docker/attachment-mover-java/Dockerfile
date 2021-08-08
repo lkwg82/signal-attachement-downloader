@@ -5,9 +5,13 @@ WORKDIR /build
 
 COPY mvnw .
 COPY .mvn .mvn
-COPY src src
 COPY pom.xml .
+RUN ./mvnw clean  || echo "ok, warmup cache"
+RUN ./mvnw compile  || echo "ok, warmup cache"
+RUN ./mvnw test  || echo "ok, warmup cache"
+RUN ./mvnw verify  || echo "ok, warmup cache"
 
+COPY src src
 RUN ./mvnw clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
 
