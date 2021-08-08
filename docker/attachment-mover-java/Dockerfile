@@ -1,7 +1,17 @@
-FROM alpine:3.13 as builder
+FROM adoptopenjdk:16-openj9 as builder
 
-ADD target/quarkus-app /app
-WORKDIR /app
+RUN mkdir /build
+WORKDIR /build
+
+COPY mvnw .
+COPY .mvn .mvn
+COPY src src
+COPY pom.xml .
+
+RUN ./mvnw clean verify
+RUN java -jar target/quarkus-app/quarkus-run.jar -h
+
+WORKDIR /build/target
 
 RUN find | xargs -P100 -n1 touch -mt 197001010101 -at 197001010101
 RUN find | xargs -P100 -n1 chmod 0755
@@ -12,10 +22,10 @@ RUN adduser --uid 1000  user
 
 WORKDIR /app
 
-COPY --from=builder /app/quarkus-run.jar .
-COPY --from=builder /app/quarkus quarkus
-COPY --from=builder /app/lib lib
-COPY --from=builder /app/app app
+COPY --from=builder /build/target/quarkus-app/quarkus-run.jar .
+COPY --from=builder /build/target/quarkus-app/quarkus quarkus
+COPY --from=builder /build/target/quarkus-app/lib lib
+COPY --from=builder /build/target/quarkus-app/app app
 
 USER user
 
