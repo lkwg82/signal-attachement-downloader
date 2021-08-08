@@ -12,9 +12,10 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 
 @Slf4j
-public class AttachmentMover {
+public class AttachmentMover implements Debuggable {
     private final Path attachmentsOfSignal;
     private final Path attachmentsMoved;
+    private boolean isDebug;
 
     public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved) {
         if (attachmentsMoved.equals(attachmentsOfSignal)) {
@@ -111,5 +112,10 @@ public class AttachmentMover {
                                                            .getBytes(StandardCharsets.UTF_8));
         return attachmentsMoved.resolve("groups")
                                .resolve(base64GroupId);
+    }
+
+    @Override
+    public void setDebug(boolean flag) {
+        this.isDebug = flag;
     }
 }
