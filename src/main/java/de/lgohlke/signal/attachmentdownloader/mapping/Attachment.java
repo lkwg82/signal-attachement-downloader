@@ -7,6 +7,6 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Attachment {
     private String filename;
-    private long id;
+    private String id;
     private int size;
 }

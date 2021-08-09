@@ -188,7 +188,7 @@ public class AttachmentMoverTest {
     private Attachment createTestAttachment(Path attachmentsOfSignal, Message message) throws IOException {
         var attachment = new Attachment();
         attachment.setFilename("IMG_01.jpg");
-        attachment.setId(3149734190872347104L);
+        attachment.setId("3149734190872347104L");
         var attachmentFile = attachmentsOfSignal.resolve(attachment.getId() + "")
                                                 .toFile();
         attachmentFile.createNewFile();

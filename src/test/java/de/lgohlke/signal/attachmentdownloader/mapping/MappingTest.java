@@ -148,7 +148,7 @@ public class MappingTest {
         assertThat(attachments).hasSize(4);
         var firstAttachment = attachments.get(0);
         assertThat(firstAttachment.getSize()).isEqualTo(18386);
-        assertThat(firstAttachment.getId()).isEqualTo(4520004565653960349L);
+        assertThat(firstAttachment.getId()).isEqualTo("4520004565653960349");
     }
 
 
