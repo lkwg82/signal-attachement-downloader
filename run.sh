@@ -26,5 +26,5 @@ else
       --volume /home/lars/.local/share/signal-cli/attachments:/signal-source \
       --volume "$PWD"/moved_attachments:/moved_attachments \
       -e USERNAME="${USERNAME}" \
-      attachment-mover-java -d /signal-source -t /moved_attachments --debug
+      attachment-mover-java
 fi
