@@ -10,12 +10,13 @@ set -e
   docker build -t signal-cli .
 
   log=$(tempfile)
-  if ! docker run --rm -ti signal-cli -v -u > "$log"; then
+  if ! docker run --rm -ti signal-cli -v > "$log" ; then
     echo "ERROR signal-cli failed" >&2
     cat "$log"
     exit 1
   fi
 )
+  exit
 
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
 log=$(tempfile)
