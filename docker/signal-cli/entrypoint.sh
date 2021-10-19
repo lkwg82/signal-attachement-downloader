@@ -1,5 +1,5 @@
 #!/bin/sh
 set -ex
 
-# shellcheck disable=SC2068
-signal-cli $@
+signal-cli -u "$USERNAME" --output json receive \
+  | tee --append /output/messages.log
