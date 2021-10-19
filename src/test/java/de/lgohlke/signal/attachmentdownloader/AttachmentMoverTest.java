@@ -32,6 +32,7 @@ public class AttachmentMoverTest {
         tempFolder.mkdirs();
     }
 
+
     @Test
     void should_move_attachment_from_direct_message() throws IOException {
         var attachmentsOfSignal = prepareSignalAttachmentPath();

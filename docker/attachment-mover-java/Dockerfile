@@ -1,5 +1,18 @@
-FROM adoptopenjdk:16-openj9 as builder
+FROM eclipse-temurin:17-jdk as builder
 
+#
+# build jre
+#
+RUN jlink --add-modules ALL-MODULE-PATH --output jre \
+          --strip-debug --no-man-pages --no-header-files --compress=2
+RUN jre/bin/java -version # selftest
+
+RUN find /jre | xargs -P100 -n1 touch -mt 197001010101 -at 197001010101
+RUN find /jre | xargs -P100 -n1 chmod 0755
+
+#
+# build app
+#
 RUN mkdir /build
 WORKDIR /build
 
@@ -12,6 +25,7 @@ RUN ./mvnw test  || echo "ok, warmup cache"
 RUN ./mvnw verify  || echo "ok, warmup cache"
 
 COPY src src
+RUN ./mvnw clean verify -DskipTests # download deps
 RUN ./mvnw clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
 
@@ -20,22 +34,13 @@ WORKDIR /build/target
 RUN find | xargs -P100 -n1 touch -mt 197001010101 -at 197001010101
 RUN find | xargs -P100 -n1 chmod 0755
 
-FROM adoptopenjdk:16-jre-openj9
+FROM debian:stable-slim
 
-#
-# signal-cli
-#
-ARG SIGNAL_CLI_VERSION=0.8.5
+COPY --from=builder /jre /jre
+ENV JAVA_HOME=/jre
+ENV PATH=$PATH:/jre/bin
+RUN java -version # selftest
 
-RUN curl -sSL https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}.tar.gz | tar -xvzf -
-ENV PATH=/signal-cli-${SIGNAL_CLI_VERSION}/bin:$PATH
-RUN signal-cli -v # selftest
-
-#
-# attachment-mover
-#
-
-RUN useradd --uid 1000  user
 
 WORKDIR /app
 
@@ -47,6 +52,7 @@ COPY --from=builder /build/target/quarkus-app/app app
 ADD docker/attachment-mover-java/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+RUN useradd --uid 1000  user
 USER user
 
 # selftest

@@ -1,0 +1,21 @@
+version: "2"
+
+services:
+  bot:
+    #    image: signal-cli
+    build:
+      context: docker/signal-cli
+    user: "1000:1000"
+    env_file: .env
+    mem_limit: 90m
+    volumes:
+      - /home/lars/.local/share/signal-cli:/home/user/.local/share/signal-cli
+      - ./:/output
+  attachment-mover:
+    image: attachment-mover-java
+    user: "1000:1000"
+    mem_limit: 90m
+    volumes:
+      - /home/lars/.local/share/signal-cli/attachments:/signal_attachments
+      - ./moved_attachments:/moved_attachments
+      - ./:/output
