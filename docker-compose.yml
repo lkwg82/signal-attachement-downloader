@@ -1,6 +1,11 @@
 version: "2"
 
 services:
+  init:
+    image: debian:stable-slim
+    command: chown -v 1000:1000 /moved_attachments
+    volumes:
+      - ./moved_attachments:/moved_attachments
   bot:
     #    image: signal-cli
     build:
@@ -12,10 +17,16 @@ services:
       - /home/lars/.local/share/signal-cli:/home/user/.local/share/signal-cli
       - ./:/output
   attachment-mover:
-    image: attachment-mover-java
+    depends_on:
+      - init
+    #    image: attachment-mover-java
+    build:
+      context: .
+      dockerfile: docker/attachment-mover-java/Dockerfile
+    #    entrypoint: bash -c 'echo "up"; while(true); do sleep 1; done'
     user: "1000:1000"
     mem_limit: 90m
     volumes:
       - /home/lars/.local/share/signal-cli/attachments:/signal_attachments
       - ./moved_attachments:/moved_attachments
-      - ./:/output
+      - ./:/output:ro
