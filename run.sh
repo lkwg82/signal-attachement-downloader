@@ -9,7 +9,7 @@ set -e
   signalCliVersion=$(grep ^ARG Dockerfile | grep "SIGNAL_CLI_VERSION" | cut -d= -f2 )
   docker build -t signal-cli .
 
-  log=$(tempfile)
+  log=$(mktemp)
   if ! docker run --rm -ti --entrypoint signal-cli signal-cli -v > "$log" ; then
     echo "ERROR signal-cli failed" >&2
     cat "$log"
@@ -18,7 +18,7 @@ set -e
 )
 
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
-log=$(tempfile)
+log=$(mktemp)
 if ! docker run --rm -ti --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
   echo "ERROR app failed" >&2
   cat "$log"
