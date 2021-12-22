@@ -53,15 +53,18 @@ if [[ -n $RELEASE ]]; then
   timestamp=$(date "+%Y%m%d-%H%M%S")
 
   signalCliVersion=$(docker history --no-trunc signal-cli | grep -v ^$ | grep SIGNAL_CLI_VERSION | cut -d= -f2 | cut -d\  -f1 | xargs)
-  docker tag signal-cli lkwg82/signal-attachment-mover:signal-cli-"$signalCliVersion"
-  docker push lkwg82/signal-attachment-mover:signal-cli-"$signalCliVersion"
-  docker tag signal-cli lkwg82/signal-attachment-mover:signal-cli
-  docker push lkwg82/signal-attachment-mover:signal-cli
+  function tag_and_push(){
+    app="release"
+    docker tag "$1" "$2"
+    info "pushing $2"
+    echo
+    docker push "$2"
+  }
+  tag_and_push signal-cli lkwg82/signal-attachment-mover:signal-cli-"$signalCliVersion"
+  tag_and_push signal-cli lkwg82/signal-attachment-mover:signal-cli
 
-  docker tag attachment-mover-java lkwg82/signal-attachment-mover
-  docker tag attachment-mover-java lkwg82/signal-attachment-mover:"$timestamp"
-  docker push lkwg82/signal-attachment-mover:"$timestamp"
-  docker push lkwg82/signal-attachment-mover
+  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover
+  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover:"$timestamp"
 else
   docker-compose up --build bot
   docker-compose up --build attachment-mover
