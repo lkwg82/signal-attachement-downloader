@@ -1,5 +1,6 @@
 #!/bin/sh
 set -e
+set -o pipefail
 
 if [ -z "$USERNAME" ]; then
   echo "missing USERNAME variable"
