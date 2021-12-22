@@ -10,7 +10,7 @@ set -e
   docker build -t signal-cli .
 
   log=$(mktemp)
-  if ! docker run --rm -ti --entrypoint signal-cli signal-cli -v > "$log" ; then
+  if docker run --rm -ti --entrypoint signal-cli signal-cli -u +49123456 receive >"$log" 2>&1; then
     echo "ERROR signal-cli failed" >&2
     cat "$log"
     exit 1
