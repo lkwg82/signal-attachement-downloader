@@ -1,4 +1,5 @@
 target/
 !target/quarkus-app
 !target/app
-.m2
+.m2/
+.m2_repo/

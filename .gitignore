@@ -40,3 +40,4 @@ nb-configuration.xml
 .env
 moved_attachments/
 !/messages.log
+!/.m2_repo/

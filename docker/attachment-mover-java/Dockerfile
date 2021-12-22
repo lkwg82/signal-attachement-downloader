@@ -16,17 +16,16 @@ RUN find /jre | xargs -P100 -n1 chmod 0755
 RUN mkdir /build
 WORKDIR /build
 
+COPY .m2_repo .m2_repo
+
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
-RUN ./mvnw clean  || echo "ok, warmup cache"
-RUN ./mvnw compile  || echo "ok, warmup cache"
-RUN ./mvnw test  || echo "ok, warmup cache"
-RUN ./mvnw verify  || echo "ok, warmup cache"
-
 COPY src src
-RUN ./mvnw clean verify -DskipTests # download deps
-RUN ./mvnw clean verify
+
+ARG mvn="./mvnw -Dmaven.repo.local=.m2_repo"
+
+RUN $mvn -Dmaven.repo.local=.m2_repo clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
 
 WORKDIR /build/target
