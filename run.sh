@@ -22,9 +22,9 @@ function ok() {
 
   info "testing ... "
   log=$(mktemp)
-  if ! docker run --rm -ti --entrypoint signal-cli -w /tmp signal-cli -v >"$log"; then
+  if ! docker run --rm -ti --entrypoint signal-cli -w /tmp signal-cli --version >"$log"; then
     echo "ERROR signal-cli failed" >&2
-    cat "$log"
+    cat "$log" | sed -e 's#^#\t#'
     exit 1
   fi
   ok
@@ -33,7 +33,7 @@ function ok() {
   log=$(mktemp)
   if docker run --rm -ti --entrypoint signal-cli signal-cli -u +49123456 receive >"$log" 2>&1; then
     echo "ERROR signal-cli failed" >&2
-    cat "$log"
+    cat "$log"  | sed -e 's#^#\t#'
     exit 1
   fi
   ok
