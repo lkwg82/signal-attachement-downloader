@@ -8,8 +8,6 @@ import lombok.val;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Date;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -36,8 +34,6 @@ class MoveRequestBuilder {
         if (timestamp == null) {
             throw new IllegalStateException("timestamp is null in dataMessage: " + message);
         }
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
-        var formattedDate = dformat.format(new Date(timestamp.getTime()));
 
         Path attachmentsMovedPath = buildAttachmentsMovedPath(dataMessage);
 
@@ -47,7 +43,7 @@ class MoveRequestBuilder {
 
             var sourceFile = attachmentsOfSignal.resolve(id);
 
-            String filename = formattedDate + "_" + id;
+            String filename = new TargetAttachmentFilename(timestamp, id).createFilename();
             Path targetFile;
             if (flatGroupDir && dataMessage.getGroupInfo() != null) {
                 targetFile = attachmentsMovedPath.resolve(filename);
