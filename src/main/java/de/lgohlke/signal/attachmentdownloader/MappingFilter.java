@@ -11,10 +11,12 @@ import lombok.extern.slf4j.Slf4j;
 public class MappingFilter implements Filter<String>, Debuggable {
     private final Filter<Message> messageFilter;
     private boolean isDebug;
+    // object mapper is not thread safe so wrap it safely
+    private final ThreadLocal<ObjectMapper> mapperThreadLocal = new ThreadLocal<>();
 
     @Override
     public void handle(String input) {
-        var mapper = new ObjectMapper();
+        ObjectMapper mapper = retrieveCurrentMapper();
         try {
             var message = mapper.readValue(input, Message.class);
             messageFilter.handle(message);
@@ -24,6 +26,16 @@ public class MappingFilter implements Filter<String>, Debuggable {
                 log.info(e.getMessage());
             }
         }
+    }
+
+    private ObjectMapper retrieveCurrentMapper() {
+        ObjectMapper objectMapper = mapperThreadLocal.get();
+        if (objectMapper == null) {
+            ObjectMapper ob = new ObjectMapper();
+            mapperThreadLocal.set(ob);
+            return ob;
+        }
+        return objectMapper;
     }
 
     @Override
