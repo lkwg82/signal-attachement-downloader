@@ -8,10 +8,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @Slf4j
-public class AttachmentMover implements Debuggable, Filter<Message> {
+public class AttachmentMover implements Filter<Message> {
     private final Path attachmentsMoved;
     private final MoveRequestBuilder moveRequestBuilder;
-    private boolean isDebug;
 
     public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved) {
         if (attachmentsMoved.equals(attachmentsOfSignal)) {
@@ -64,13 +63,13 @@ public class AttachmentMover implements Debuggable, Filter<Message> {
         try {
             if (targetFile.toFile()
                           .exists()) {
-                log.info("already moved " + sourceFile + " to " + targetFile);
+                log.info("already moved {} to {}", sourceFile, targetFile);
             } else {
                 java.nio.file.Files.move(sourceFile, targetFile);
-                log.info("moved " + sourceFile + " to " + targetFile);
+                log.info("moved {} to {}", sourceFile, targetFile);
             }
         } catch (IOException e) {
-            log.error("could not move " + sourceFile + " to " + targetFile);
+            log.error("could not move {} to {}", sourceFile, targetFile);
             throw e;
         }
     }
@@ -78,15 +77,10 @@ public class AttachmentMover implements Debuggable, Filter<Message> {
     private void createTargetDirectory(File target) {
         if (!target.exists()) {
             if (target.mkdirs()) {
-                log.info("created moved attachment directory:" + attachmentsMoved);
+                log.info("created moved attachment directory:{}", attachmentsMoved);
             } else {
                 throw new IllegalStateException("could not create directory:" + attachmentsMoved);
             }
         }
-    }
-
-    @Override
-    public void setDebug(boolean flag) {
-        this.isDebug = flag;
     }
 }

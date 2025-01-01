@@ -46,7 +46,7 @@ class MoveRequestBuilder {
             val id = attachment.getId();
             val cleanedFilename = extractFilename(attachment);
 
-            var sourceFile = attachmentsOfSignal.resolve(id + "");
+            var sourceFile = attachmentsOfSignal.resolve(id);
             var targetFile = attachmentsMovedPath.resolve(source)
                                                  .resolve(formattedDate + "_" + id + "_" + cleanedFilename);
 

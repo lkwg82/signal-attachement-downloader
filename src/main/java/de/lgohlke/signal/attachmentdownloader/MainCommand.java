@@ -7,7 +7,6 @@ import picocli.CommandLine;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
 
 @CommandLine.Command
 @Slf4j
@@ -52,12 +51,11 @@ public class MainCommand implements Runnable {
         signalAttachmentDirectory = signalAttachmentDirectory.replace("$HOME", System.getenv("HOME"));
 
         log.info("reading from {} ...", messagesLog.toString());
-        log.info("search in " + signalAttachmentDirectory + " for attachments");
+        log.info("search in {} for attachments", signalAttachmentDirectory);
         var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory), Path.of(movedAttachmentDir));
         var mappingFilter = new MappingFilter(attachmentMover);
 
-        List.of(attachmentMover, mappingFilter)
-            .forEach(debuggable -> debuggable.setDebug(showDebugInfos));
+        mappingFilter.setDebug(showDebugInfos);
 
         int count = 0;
         for (String line : Files.readAllLines(messagesLog.toPath())) {
