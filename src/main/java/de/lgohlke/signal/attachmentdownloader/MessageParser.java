@@ -6,27 +6,14 @@ import de.lgohlke.signal.attachmentdownloader.mapping.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.Optional;
+
 @Slf4j
 @RequiredArgsConstructor
-public class MappingFilter implements Filter<String>, Debuggable {
-    private final Filter<Message> messageFilter;
+public class MessageParser implements Debuggable {
     private boolean isDebug;
     // object mapper is not thread safe so wrap it safely
     private final ThreadLocal<ObjectMapper> mapperThreadLocal = new ThreadLocal<>();
-
-    @Override
-    public void handle(String input) {
-        ObjectMapper mapper = retrieveCurrentMapper();
-        try {
-            var message = mapper.readValue(input, Message.class);
-            messageFilter.handle(message);
-        } catch (JsonProcessingException e) {
-            log.info("ignored message (not parsable)");
-            if (isDebug) {
-                log.info(e.getMessage());
-            }
-        }
-    }
 
     private ObjectMapper retrieveCurrentMapper() {
         ObjectMapper objectMapper = mapperThreadLocal.get();
@@ -41,5 +28,19 @@ public class MappingFilter implements Filter<String>, Debuggable {
     @Override
     public void setDebug(boolean flag) {
         this.isDebug = flag;
+    }
+
+    Optional<Message> parse(String line) {
+        ObjectMapper objectMapper = retrieveCurrentMapper();
+        try {
+            Message message = objectMapper.readValue(line, Message.class);
+            return Optional.of(message);
+        } catch (JsonProcessingException e) {
+            log.info("ignored message (not parsable)");
+            if (isDebug) {
+                log.info(e.getMessage());
+            }
+        }
+        return Optional.empty();
     }
 }
