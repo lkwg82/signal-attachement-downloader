@@ -37,7 +37,7 @@ public class MainCommand implements Runnable {
 
 
     @CommandLine.Option(names = {"--map-reaction-to-subfolder"}, description = "copy attachments based on emojis to subfolders")
-    private Map<String, String> emojiMap;
+    private Map<String, String> emojiMap = new HashMap<>();
 
     @SneakyThrows
     @Override
