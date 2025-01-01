@@ -2,7 +2,7 @@ FROM debian:stable-slim
 
 RUN apt-get update && apt-get install -y curl
 
-ENV SIGNAL_CLI_VERSION=0.11.5.1
+ENV SIGNAL_CLI_VERSION=0.13.11
 ENV SIGNAL_CLI_URL="https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}-Linux-native.tar.gz"
 
 RUN curl --silent --location $SIGNAL_CLI_URL | tar -xvzf - -C /usr/bin \
