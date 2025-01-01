@@ -33,13 +33,14 @@ public class AttachmentMoverTest {
         tempFolder.mkdirs();
     }
 
-
     @Test
     void should_move_attachment_from_direct_message() throws IOException {
         var attachmentsOfSignal = prepareSignalAttachmentPath();
         var attachmentsMoved = prepareMovedAttachmentPath();
 
-        var movedAttachment = buildMovedAttachmentFile(message, attachmentsOfSignal, attachmentsMoved);
+        var movedAttachment = buildMovedAttachmentFile(message,
+                                                       attachmentsOfSignal,
+                                                       attachmentsMoved.resolve("direct"));
 
         // action
         new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
@@ -150,11 +151,10 @@ public class AttachmentMoverTest {
     private File buildMovedAttachmentFile(Message message, Path attachmentsOfSignal, Path attachmentsMoved) throws IOException {
         var attachment = createTestAttachment(attachmentsOfSignal, message);
         String filename = buildMovedFilename(message, attachment);
-        var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
-                                                              .getSourceUuid().toString())
-                                              .resolve(filename)
-                                              .toFile();
-        return movedAttachment;
+        return attachmentsMoved.resolve(message.getEnvelope()
+                                               .getSourceUuid().toString())
+                               .resolve(filename)
+                               .toFile();
     }
 
     private void moveAttachmentToMovedFolder(Path attachmentsOfSignal, Attachment attachment, File movedAttachment) throws IOException {
