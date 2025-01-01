@@ -6,8 +6,7 @@ import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -150,15 +149,10 @@ public class MoveRequestTest {
     }
 
     private Message buildMessage(String rawMessage) {
-        List<Message> messages = new ArrayList<>();
-        var messageFilter = new Filter<Message>() {
-            @Override
-            public void handle(Message input) {
-                messages.add(input);
-            }
-        };
-        var mappingFilter = new MappingFilter(messageFilter);
-        mappingFilter.handle(rawMessage);
-        return messages.get(0);
+        Optional<Message> optionalMessage = new MessageParser().parse(rawMessage);
+        if (optionalMessage.isPresent()) {
+            return optionalMessage.get();
+        }
+        throw new IllegalStateException();
     }
 }

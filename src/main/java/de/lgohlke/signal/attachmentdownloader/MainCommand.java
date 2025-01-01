@@ -54,21 +54,21 @@ public class MainCommand implements Runnable {
 
         log.info("reading from {} ...", messagesLog.toString());
         log.info("search in {} for attachments", signalAttachmentDirectory);
+
         var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory), Path.of(movedAttachmentDir));
-        var mappingFilter = new MappingFilter(attachmentMover);
-
-        mappingFilter.setDebug(showDebugInfos);
-
+        MessageParser parser = new MessageParser();
+        parser.setDebug(showDebugInfos);
         int count = 0;
         for (String line : Files.readAllLines(messagesLog.toPath())) {
-            System.out.println("line: "+line);
-            mappingFilter.handle(line);
+            System.out.println("line: " + line);
+            parser.parse(line)
+                  .ifPresent(attachmentMover::handle);
             count++;
         }
         log.info("read {} lines", count);
     }
 
-    public static void main(String[] args){
+    public static void main(String[] args) {
         MainCommand command = new MainCommand();
         int exitCode = new CommandLine(command).execute(args);
         System.exit(exitCode);
