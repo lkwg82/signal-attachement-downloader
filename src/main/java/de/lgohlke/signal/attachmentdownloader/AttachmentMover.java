@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 @Slf4j
 public class AttachmentMover {
@@ -39,11 +40,14 @@ public class AttachmentMover {
         moveRequestBuilder = new MoveRequestBuilder(attachmentsOfSignal, attachmentsMoved, flatGroupDir);
     }
 
-    public void handle(Message message) {
+    /**
+     * @return List of targetPaths
+     */
+    public List<Path> handle(Message message) {
         var moveRequests = moveRequestBuilder.build(message);
 
         if (moveRequests.isEmpty())
-            return;
+            return List.of();
 
         var target = attachmentsMoved.toFile();
         createTargetDirectory(target);
@@ -56,6 +60,8 @@ public class AttachmentMover {
                 e.printStackTrace();
             }
         });
+
+        return moveRequests.stream().map(MoveRequest::target).toList();
     }
 
     private void createSenderSourceDirectory(Path targetFile) {
