@@ -12,5 +12,6 @@ public class DataMessage {
     private List<Attachment> attachments = List.of();
     private GroupInfo groupInfo;
     private String message;
+    private Reaction reaction;
     private Timestamp timestamp;
 }
