@@ -21,6 +21,7 @@ public class MainCommand implements Runnable {
     @CommandLine.Option(
             names = {"-t", "--moved-attachment-dir"},
             description = "location of attachments to be moved to",
+            defaultValue = "moved_attachments",
             required = true
     )
     private String movedAttachmentDir;
@@ -28,6 +29,7 @@ public class MainCommand implements Runnable {
     @CommandLine.Option(
             names = {"-m", "--messages-log"},
             description = "location of messages log",
+            defaultValue = "messages.log",
             required = true
     )
     private File messagesLog;
@@ -59,6 +61,7 @@ public class MainCommand implements Runnable {
 
         int count = 0;
         for (String line : Files.readAllLines(messagesLog.toPath())) {
+            System.out.println("line: "+line);
             mappingFilter.handle(line);
             count++;
         }
