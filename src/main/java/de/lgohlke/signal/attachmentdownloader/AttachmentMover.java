@@ -8,11 +8,15 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 @Slf4j
-public class AttachmentMover implements Filter<Message> {
+public class AttachmentMover {
     private final Path attachmentsMoved;
     private final MoveRequestBuilder moveRequestBuilder;
 
     public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved) {
+        this(attachmentsOfSignal, attachmentsMoved, false);
+    }
+
+    public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved, boolean flatGroupDir) {
         if (attachmentsMoved.equals(attachmentsOfSignal)) {
             throw new IllegalArgumentException("paths should be different: " + attachmentsOfSignal + " <> " + attachmentsMoved);
         }
@@ -32,14 +36,18 @@ public class AttachmentMover implements Filter<Message> {
         }
 
         this.attachmentsMoved = attachmentsMoved;
-        moveRequestBuilder = new MoveRequestBuilder(attachmentsOfSignal, attachmentsMoved);
+        moveRequestBuilder = new MoveRequestBuilder(attachmentsOfSignal, attachmentsMoved, flatGroupDir);
     }
 
     public void handle(Message message) {
+        var moveRequests = moveRequestBuilder.build(message);
+
+        if (moveRequests.isEmpty())
+            return;
+
         var target = attachmentsMoved.toFile();
         createTargetDirectory(target);
 
-        var moveRequests = moveRequestBuilder.build(message);
         moveRequests.forEach(request -> {
             createSenderSourceDirectory(request.target());
             try {

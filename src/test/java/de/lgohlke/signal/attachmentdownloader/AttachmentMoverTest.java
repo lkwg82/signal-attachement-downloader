@@ -18,6 +18,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
@@ -55,7 +56,7 @@ public class AttachmentMoverTest {
 
         String filename = buildMovedFilename(message, attachment);
         var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
-                                                              .getSource())
+                                                              .getSourceUuid().toString())
                                               .resolve(filename)
                                               .toFile();
 
@@ -150,7 +151,7 @@ public class AttachmentMoverTest {
         var attachment = createTestAttachment(attachmentsOfSignal, message);
         String filename = buildMovedFilename(message, attachment);
         var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
-                                                              .getSource())
+                                                              .getSourceUuid().toString())
                                               .resolve(filename)
                                               .toFile();
         return movedAttachment;
@@ -170,7 +171,7 @@ public class AttachmentMoverTest {
                                .getDataMessage()
                                .getTimestamp();
 
-        return dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId() + "_" + attachment.getFilename();
+        return dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId();
     }
 
     private Path prepareMovedAttachmentPath() {
@@ -189,7 +190,7 @@ public class AttachmentMoverTest {
     private Attachment createTestAttachment(Path attachmentsOfSignal, Message message) throws IOException {
         var attachment = new Attachment();
         attachment.setFilename("IMG_01.jpg");
-        attachment.setId("3149734190872347104L");
+        attachment.setId("3149734190872347104.jpg");
         var attachmentFile = attachmentsOfSignal.resolve(attachment.getId() + "")
                                                 .toFile();
         attachmentFile.createNewFile();
@@ -205,7 +206,7 @@ public class AttachmentMoverTest {
     private Message createTestMessage() {
         var message = new Message();
         var envelope = new Envelope();
-        envelope.setSource("sourceA");
+        envelope.setSourceUuid(UUID.fromString("f0856790-6342-4610-a018-1588e741155e"));
         var dataMessage = new DataMessage();
 
         envelope.setDataMessage(dataMessage);
@@ -225,7 +226,7 @@ public class AttachmentMoverTest {
                                                            .getBytes(StandardCharsets.UTF_8));
         var movedAttachment = attachmentsMoved.resolve("groups")
                                               .resolve(base64GroupId)
-                                              .resolve("sourceA")
+                                              .resolve("f0856790-6342-4610-a018-1588e741155e")
                                               .resolve(filename)
                                               .toFile();
         return movedAttachment;

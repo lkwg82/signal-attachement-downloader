@@ -7,6 +7,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 @CommandLine.Command
 @Slf4j
@@ -42,10 +43,23 @@ public class MainCommand implements Runnable {
     private boolean helpRequested;
 
     @CommandLine.Option(
+            names = {"--flat-group-dir"},
+            description = "when set false, in a group directory each senders gets a separate subfolder"
+    )
+    private boolean group_dir_is_flat = true;
+
+    @CommandLine.Option(
             names = {"--debug"},
             description = "show additional debug messages"
     )
     private boolean showDebugInfos;
+
+
+    @CommandLine.Option(
+            names = {"--map-emoji-to-subfolder"},
+            description = "copy attachments based on emojis to subfolders"
+    )
+    private Map<String, String> emojiMap;
 
     @SneakyThrows
     @Override
@@ -55,9 +69,11 @@ public class MainCommand implements Runnable {
         log.info("reading from {} ...", messagesLog.toString());
         log.info("search in {} for attachments", signalAttachmentDirectory);
 
-        var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory), Path.of(movedAttachmentDir));
+        var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory),
+                                                  Path.of(movedAttachmentDir),
+                                                  group_dir_is_flat);
         MessageParser parser = new MessageParser();
-        parser.setDebug(showDebugInfos);
+
         int count = 0;
         for (String line : Files.readAllLines(messagesLog.toPath())) {
             System.out.println("line: " + line);
