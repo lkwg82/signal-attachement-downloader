@@ -53,14 +53,20 @@ public class MainCommand implements Runnable {
         MessageParser parser = new MessageParser();
 
         var reactionHandlerMap = new HashMap<String, ReactionHandler>();
-        emojiMap.forEach((key, value) -> reactionHandlerMap.put(
-                                 key,
-                                 new ReactionHandler(
-                                         Path.of(movedAttachmentDir)
-                                             .resolve("reactions")
-                                             .resolve(value))
-                         )
+        emojiMap.forEach((key, value) -> {
+                             Path baseReactionsPath = Path.of(movedAttachmentDir).resolve("reactions");
+                             Path reactionPath = baseReactionsPath.resolve(value)
+                                                                  .normalize();
+                             if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
+                                 throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
+                             } else {
+                                 reactionHandlerMap.put(key, new ReactionHandler(reactionPath));
+                             }
+                         }
         );
+
+        System.out.println(emojiMap);
+        System.out.println(reactionHandlerMap);
 
         int count = 0;
 
