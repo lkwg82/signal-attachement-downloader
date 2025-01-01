@@ -64,4 +64,10 @@ public class MainCommand implements Runnable {
         }
         log.info("read {} lines", count);
     }
+
+    public static void main(String[] args){
+        MainCommand command = new MainCommand();
+        int exitCode = new CommandLine(command).execute(args);
+        System.exit(exitCode);
+    }
 }
