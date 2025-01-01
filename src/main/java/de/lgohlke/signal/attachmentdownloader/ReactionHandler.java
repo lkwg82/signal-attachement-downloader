@@ -33,4 +33,11 @@ class ReactionHandler {
             }
         }
     }
+
+    @Override
+    public String toString() {
+        return "ReactionHandler{" +
+                "reactionFolder=" + reactionFolder +
+                '}';
+    }
 }
