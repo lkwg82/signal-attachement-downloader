@@ -8,8 +8,9 @@ import java.util.UUID;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Envelope {
-    private DataMessage dataMessage = new DataMessage();
-    private UUID sourceUuid; // would be the successor of <source>
-    private Timestamp timestamp;
+public class Reaction {
+    private String emoji;
+    private UUID targetAuthorUuid;
+    private Timestamp targetSentTimestamp;
+    private Boolean isRemove;
 }

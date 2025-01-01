@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,6 +22,7 @@ public class MappingTest {
                 {
                   "envelope": {
                     "source": "+491734982893",
+                    "sourceUuid": "f0856790-6342-4610-a018-1588e741155e",
                     "sourceDevice": 2,
                     "timestamp": 1628069823084,
                     "dataMessage": {
@@ -39,7 +41,7 @@ public class MappingTest {
         var message = mapper.readValue(data, Message.class);
 
         var envelope = message.getEnvelope();
-        assertThat(envelope.getSource()).isEqualTo("+491734982893");
+        assertThat(envelope.getSourceUuid()).isEqualTo(UUID.fromString("f0856790-6342-4610-a018-1588e741155e"));
         assertThat(envelope.getTimestamp()).isEqualTo(Timestamp.from(Instant.ofEpochMilli(1628069823084L)));
 
         var dataMessage = envelope.getDataMessage();
@@ -88,7 +90,7 @@ public class MappingTest {
     @SneakyThrows
     public void group_message_with_attachments() {
         var data = """
-                                
+                
                   {
                     "envelope": {
                       "source": "+491734982893",

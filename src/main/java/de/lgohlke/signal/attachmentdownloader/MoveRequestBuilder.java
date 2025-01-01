@@ -1,6 +1,5 @@
 package de.lgohlke.signal.attachmentdownloader;
 
-import de.lgohlke.signal.attachmentdownloader.mapping.Attachment;
 import de.lgohlke.signal.attachmentdownloader.mapping.DataMessage;
 import de.lgohlke.signal.attachmentdownloader.mapping.Message;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +19,7 @@ import java.util.List;
 class MoveRequestBuilder {
     private final Path attachmentsOfSignal;
     private final Path attachmentsMoved;
+    private final Boolean flatGroupDir;
 
     public List<MoveRequest> build(Message message) {
         var envelope = message.getEnvelope();
@@ -31,7 +31,7 @@ class MoveRequestBuilder {
             return List.of();
         }
 
-        var source = envelope.getSource();
+        var source = envelope.getSourceUuid();
         var timestamp = dataMessage.getTimestamp();
         if (timestamp == null) {
             throw new IllegalStateException("timestamp is null in dataMessage: " + message);
@@ -44,32 +44,26 @@ class MoveRequestBuilder {
         List<MoveRequest> moveRequests = new ArrayList<>();
         for (var attachment : attachments) {
             val id = attachment.getId();
-            val cleanedFilename = extractFilename(attachment);
 
             var sourceFile = attachmentsOfSignal.resolve(id);
-            var targetFile = attachmentsMovedPath.resolve(source)
-                                                 .resolve(formattedDate + "_" + id + "_" + cleanedFilename);
 
+            String filename = formattedDate + "_" + id;
+            Path targetFile;
+            if (flatGroupDir && dataMessage.getGroupInfo() != null) {
+                targetFile = attachmentsMovedPath.resolve(filename);
+            } else {
+                targetFile = attachmentsMovedPath.resolve(source.toString())
+                                                 .resolve(filename);
+            }
             moveRequests.add(new MoveRequest(sourceFile, targetFile));
         }
         return moveRequests;
     }
 
-    private static String extractFilename(Attachment attachment) {
-        var filename = attachment.getFilename();
-        if (filename == null) {
-            val contentType = attachment.getContentType();
-            val parts = contentType.split("/");
-            return "empty." + parts[1];
-        }
-        return filename.replaceAll("\\\\", "_")
-                       .replaceAll("/", "_");
-    }
-
     private Path buildAttachmentsMovedPath(DataMessage dataMessage) {
         var groupInfo = dataMessage.getGroupInfo();
         if (groupInfo == null) {
-            return attachmentsMoved;
+            return attachmentsMoved.resolve("direct");
         }
         var base64GroupId = Base64.getEncoder()
                                   .encodeToString(groupInfo.getGroupId()

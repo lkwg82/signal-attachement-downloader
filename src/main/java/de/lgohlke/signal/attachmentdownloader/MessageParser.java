@@ -10,8 +10,7 @@ import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
-public class MessageParser implements Debuggable {
-    private boolean isDebug;
+public class MessageParser {
     // object mapper is not thread safe so wrap it safely
     private final ThreadLocal<ObjectMapper> mapperThreadLocal = new ThreadLocal<>();
 
@@ -25,11 +24,6 @@ public class MessageParser implements Debuggable {
         return objectMapper;
     }
 
-    @Override
-    public void setDebug(boolean flag) {
-        this.isDebug = flag;
-    }
-
     Optional<Message> parse(String line) {
         ObjectMapper objectMapper = retrieveCurrentMapper();
         try {
@@ -37,9 +31,7 @@ public class MessageParser implements Debuggable {
             return Optional.of(message);
         } catch (JsonProcessingException e) {
             log.info("ignored message (not parsable)");
-            if (isDebug) {
-                log.info(e.getMessage());
-            }
+            log.info(e.getMessage());
         }
         return Optional.empty();
     }
