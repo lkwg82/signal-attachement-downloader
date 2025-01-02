@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MoveRequestTest {
+public class MoveRequestBuilderTest {
     private final Path attachmentsOfSignal = Path.of("source");
     private final Path attachmentsMoved = Path.of("target");
     private final MoveRequestBuilder builder = new MoveRequestBuilder(attachmentsOfSignal,
