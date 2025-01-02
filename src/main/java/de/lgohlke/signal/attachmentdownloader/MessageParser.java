@@ -30,8 +30,8 @@ public class MessageParser {
             Message message = objectMapper.readValue(line, Message.class);
             return Optional.of(message);
         } catch (JsonProcessingException e) {
-            log.info("ignored message (not parsable)");
-            log.info(e.getMessage());
+            log.warn("ignored message (not parsable)");
+            log.warn(e.getMessage());
         }
         return Optional.empty();
     }
