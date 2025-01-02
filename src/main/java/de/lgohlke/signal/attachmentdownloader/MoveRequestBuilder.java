@@ -26,13 +26,12 @@ class MoveRequestBuilder {
             return List.of();
         }
 
-        var source = envelope.getSourceUuid();
         var timestamp = dataMessage.getTimestamp();
         if (timestamp == null) {
             throw new IllegalStateException("timestamp is null in dataMessage: " + message);
         }
         TargetSubfolderComputer subfolderComputer = new TargetSubfolderComputer();
-        Path computedPath = subfolderComputer.computePath(dataMessage);
+        Path computedPath = subfolderComputer.computePath(envelope);
         Path attachmentsMovedPath = attachmentsMoved.resolve(computedPath);
 
         List<MoveRequest> moveRequests = new ArrayList<>();
@@ -43,11 +42,16 @@ class MoveRequestBuilder {
 
             String filename = new TargetAttachmentFilename(timestamp, id).createFilename();
             Path targetFile;
-            if (flatGroupDir && dataMessage.getGroupInfo() != null) {
+            if (dataMessage.getGroupInfo() == null) {
                 targetFile = attachmentsMovedPath.resolve(filename);
             } else {
-                targetFile = attachmentsMovedPath.resolve(source.toString())
-                                                 .resolve(filename);
+                if (flatGroupDir) {
+                    targetFile = attachmentsMovedPath.resolve(filename);
+                } else {
+                    String sourceUUid = envelope.getSourceUuid().toString();
+                    targetFile = attachmentsMovedPath.resolve(sourceUUid)
+                                                     .resolve(filename);
+                }
             }
             moveRequests.add(new MoveRequest(sourceFile, targetFile));
         }
