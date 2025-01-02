@@ -11,4 +11,4 @@ java -jar quarkus-run.jar \
   --messages-log "${MESSAGES_LOG:-/output/messages.log.2}" \
   --messages-log "${MESSAGES_LOG:-/output/messages.log.3}" \
   --messages-log "${MESSAGES_LOG:-/output/messages.log.4}" \
-  --debug
+  --debug $*
