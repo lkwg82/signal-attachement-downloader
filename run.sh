@@ -49,6 +49,10 @@ if ! docker run --rm -ti --entrypoint java attachment-mover-java -jar quarkus-ru
   exit 1
 fi
 
+
+docker compose up --build bot
+docker compose up --build attachment-mover
+
 if [[ -n $RELEASE ]]; then
   timestamp=$(date "+%Y%m%d-%H%M%S")
 
@@ -65,7 +69,4 @@ if [[ -n $RELEASE ]]; then
 
   tag_and_push attachment-mover-java lkwg82/signal-attachment-mover
   tag_and_push attachment-mover-java lkwg82/signal-attachment-mover:mover-"$timestamp"
-else
-  docker compose up --build bot
-  docker compose up --build attachment-mover
 fi
