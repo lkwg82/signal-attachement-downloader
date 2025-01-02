@@ -33,8 +33,8 @@ public class MainCommand implements Runnable {
     @CommandLine.Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
     private boolean helpRequested;
 
-    @CommandLine.Option(names = {"--flat-group-dir"}, description = "when set false, in a group directory each senders gets a separate subfolder")
-    private boolean group_dir_is_flat = true;
+    @CommandLine.Option(names = {"--flat-group-dir"}, description = "when set false, in a group directory each senders gets a separate subfolder", defaultValue = "true")
+    private boolean group_dir_is_flat;
 
     @CommandLine.Option(names = {"--debug"}, description = "show additional debug messages")
     private boolean showDebugInfos;
@@ -101,14 +101,17 @@ public class MainCommand implements Runnable {
     }
 
     private Stream<String> streamMessagesFromExistingFiles() {
-        return messagesLogs.stream().filter(File::exists).map(File::toPath).flatMap(path -> {
-            try {
-                return Files.lines(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return Stream.empty();
-            }
-        });
+        return messagesLogs.stream()
+                           .filter(File::exists)
+                           .map(File::toPath)
+                           .flatMap(path -> {
+                               try {
+                                   return Files.lines(path);
+                               } catch (IOException e) {
+                                   log.error(e.getMessage(), e);
+                                   return Stream.empty();
+                               }
+                           });
     }
 
     private Map<String, ReactionHandler> createReactionHandlerMap(Map<String, String> emojiMap) {

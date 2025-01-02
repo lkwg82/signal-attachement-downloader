@@ -7,7 +7,7 @@ import picocli.CommandLine;
 public class QuarkusApp implements QuarkusApplication {
 
     @Override
-    public int run(String... args) throws Exception {
+    public int run(String... args) {
         MainCommand command = new MainCommand();
         return new CommandLine(command).execute(args);
     }
