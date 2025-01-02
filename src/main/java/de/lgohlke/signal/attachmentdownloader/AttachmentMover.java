@@ -57,7 +57,7 @@ public class AttachmentMover {
             try {
                 moveAttachment(request.source(), request.target());
             } catch (IOException e) {
-                e.printStackTrace();
+                log.error(e.getMessage(), e);
             }
         });
 
