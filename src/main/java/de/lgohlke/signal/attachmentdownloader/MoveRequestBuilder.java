@@ -25,7 +25,7 @@ class MoveRequestBuilder {
 
         var attachments = dataMessage.getAttachments();
         if (attachments.isEmpty()) {
-            log.info("no attachments");
+            log.debug("no attachments: {}", message);
             return List.of();
         }
 
