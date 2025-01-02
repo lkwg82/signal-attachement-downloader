@@ -56,7 +56,11 @@ public class MainCommand implements Runnable {
                                                   Path.of(movedAttachmentDir),
                                                   group_dir_is_flat);
 
-        var reactionHandlerMap = new ReactionHandlerFactory(emojiMap,
+        // have problems to configure via cli
+        val preconfiguredEmojiMap = new HashMap<>(emojiMap);
+        preconfiguredEmojiMap.put("🎁", "calendar");
+
+        var reactionHandlerMap = new ReactionHandlerFactory(preconfiguredEmojiMap,
                                                             Path.of(movedAttachmentDir)).createReactionHandlerMap();
 
         Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
