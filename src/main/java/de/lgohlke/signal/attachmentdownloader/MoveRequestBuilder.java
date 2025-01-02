@@ -1,15 +1,12 @@
 package de.lgohlke.signal.attachmentdownloader;
 
-import de.lgohlke.signal.attachmentdownloader.mapping.DataMessage;
 import de.lgohlke.signal.attachmentdownloader.mapping.Message;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 @Slf4j
@@ -34,8 +31,9 @@ class MoveRequestBuilder {
         if (timestamp == null) {
             throw new IllegalStateException("timestamp is null in dataMessage: " + message);
         }
-
-        Path attachmentsMovedPath = buildAttachmentsMovedPath(dataMessage);
+        TargetSubfolderComputer subfolderComputer = new TargetSubfolderComputer();
+        Path computedPath = subfolderComputer.computePath(dataMessage);
+        Path attachmentsMovedPath = attachmentsMoved.resolve(computedPath);
 
         List<MoveRequest> moveRequests = new ArrayList<>();
         for (var attachment : attachments) {
@@ -54,17 +52,5 @@ class MoveRequestBuilder {
             moveRequests.add(new MoveRequest(sourceFile, targetFile));
         }
         return moveRequests;
-    }
-
-    private Path buildAttachmentsMovedPath(DataMessage dataMessage) {
-        var groupInfo = dataMessage.getGroupInfo();
-        if (groupInfo == null) {
-            return attachmentsMoved.resolve("direct");
-        }
-        var base64GroupId = Base64.getEncoder()
-                                  .encodeToString(groupInfo.getGroupId()
-                                                           .getBytes(StandardCharsets.UTF_8));
-        return attachmentsMoved.resolve("groups")
-                               .resolve(base64GroupId);
     }
 }
