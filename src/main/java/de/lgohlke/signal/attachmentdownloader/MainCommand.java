@@ -1,8 +1,6 @@
 package de.lgohlke.signal.attachmentdownloader;
 
 import de.lgohlke.signal.attachmentdownloader.mapping.Reaction;
-import io.quarkus.runtime.Quarkus;
-import io.quarkus.runtime.QuarkusApplication;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -21,7 +19,7 @@ import java.util.stream.Stream;
 
 @CommandLine.Command
 @Slf4j
-public class MainCommand implements Runnable, QuarkusApplication {
+public class MainCommand implements Runnable {
     @CommandLine.Option(names = {"-d", "--signal-attachment-dir"}, description = "location of attachments of signal-cli", defaultValue = "$HOME/.local/share/signal-cli/attachments")
     private String signalAttachmentDirectory;
 
@@ -120,22 +118,5 @@ public class MainCommand implements Runnable, QuarkusApplication {
     }
 
     record SourceUuid_Timestamp(UUID source, Timestamp timestamp) {
-    }
-
-    @Override
-    public int run(String... args) throws Exception {
-        MainCommand command = new MainCommand();
-        return new CommandLine(command).execute(args);
-    }
-
-    public static void main(String... args) {
-        String[] _args = new String[]{
-                "--map-reaction-to-subfolder=👍=keep_it",
-                "--map-reaction-to-subfolder=🎁=calendar",
-                "--messages-log=messages.log",
-                "--messages-log=messages.log.1",
-                "--messages-log=messages.log.2",
-        };
-        Quarkus.run(MainCommand.class, _args);
     }
 }
