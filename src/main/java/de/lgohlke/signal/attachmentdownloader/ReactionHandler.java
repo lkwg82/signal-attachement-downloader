@@ -1,5 +1,6 @@
 package de.lgohlke.signal.attachmentdownloader;
 
+import de.lgohlke.signal.attachmentdownloader.mapping.Envelope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,20 +10,24 @@ import java.nio.file.Path;
 @Slf4j
 @RequiredArgsConstructor
 class ReactionHandler {
+    private final TargetSubfolderComputer subfolderComputer = new TargetSubfolderComputer();
+    private final Path basePath;
     private final Path reactionFolder;
 
-    void handle(Path attachment) {
-        reactionFolder.toFile().mkdirs();
+    Path handle(Path attachment, Envelope envelope) {
+        Path subFolderPath = subfolderComputer.computePath(envelope);
+        Path fullPath = basePath.resolve(subFolderPath).resolve(reactionFolder);
+        fullPath.toFile().mkdirs();
 
-        log.info("{}", attachment);
-        log.info("{}", attachment.getFileName());
-        log.info("{}", reactionFolder);
-        Path target = reactionFolder.resolve(attachment.getFileName());
+        log.info("source {}", attachment);
+        log.info("source filename {}", attachment.getFileName());
+        log.info("target path {}", fullPath);
+        Path target = fullPath.resolve(attachment.getFileName());
         if (target.toFile().exists()) {
             log.info("already handled");
         } else {
             try {
-                log.info("trying hardlinking");
+                log.info("hardlinking ... {}", attachment.getFileName());
                 java.nio.file.Files.createLink(target, attachment);
             } catch (IOException e) {
                 log.error(e.getMessage());
@@ -34,11 +39,13 @@ class ReactionHandler {
                 }
             }
         }
+        return target;
     }
 
     @Override
     public String toString() {
         return "ReactionHandler{" +
+                "basePath=" + basePath + "," +
                 "reactionFolder=" + reactionFolder +
                 '}';
     }

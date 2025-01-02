@@ -1,8 +1,9 @@
 package de.lgohlke.signal.attachmentdownloader;
 
-import de.lgohlke.signal.attachmentdownloader.mapping.Reaction;
+import de.lgohlke.signal.attachmentdownloader.mapping.Message;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -58,60 +59,70 @@ public class MainCommand implements Runnable {
 
         Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
 
-        long count = messagesLogs.stream()
-                                 .filter(File::exists)
-                                 .map(File::toPath)
-                                 .flatMap(path -> {
-                                     try {
-                                         return Files.lines(path);
-                                     } catch (IOException e) {
-                                         e.printStackTrace();
-                                         return Stream.empty();
-                                     }
-                                 })
-                                 .peek(line -> {
-                                     log.info("line: {}", line);
-                                     parser.parse(line)
-                                           .ifPresent(message -> {
-                                               List<Path> target_paths = attachmentMover.handle(message);
-                                               if (!target_paths.isEmpty()) {
-                                                   UUID sourceUuid = message.getEnvelope().getSourceUuid();
-                                                   Timestamp timestamp = message.getEnvelope().getTimestamp();
-                                                   SourceUuid_Timestamp key = new SourceUuid_Timestamp(sourceUuid,
-                                                                                                       timestamp);
-                                                   targetPathsMap.put(key, target_paths);
-                                               }
+        long count = streamMessagesFromExistingFiles().peek(line -> {
+            if (line.contains("dataMessage") && (line.contains("reaction") || line.contains("filename"))) {
+                log.info("line: {}", line);
+            }
+            parser.parse(line).ifPresent(message -> {
+                List<Path> target_paths = attachmentMover.handle(message);
+                if (!target_paths.isEmpty()) {
+                    UUID sourceUuid = message.getEnvelope().getSourceUuid();
+                    Timestamp timestamp = message.getEnvelope().getTimestamp();
+                    SourceUuid_Timestamp key = new SourceUuid_Timestamp(sourceUuid, timestamp);
+                    targetPathsMap.put(key, target_paths);
+                }
 
-                                               Reaction reaction = message.getEnvelope().getDataMessage().getReaction();
-                                               if (reaction != null) {
-                                                   String emoji = reaction.getEmoji();
-                                                   if (reactionHandlerMap.containsKey(emoji)) {
-                                                       SourceUuid_Timestamp lookupKey = new SourceUuid_Timestamp(
-                                                               reaction.getTargetAuthorUuid(),
-                                                               reaction.getTargetSentTimestamp());
-                                                       ReactionHandler reactionHandler = reactionHandlerMap.get(emoji);
-                                                       targetPathsMap.get(lookupKey).forEach(reactionHandler::handle);
-                                                   }
-                                               }
-                                           });
-                                 })
-                                 .count();
+                checkWithReactionHandler(message, reactionHandlerMap, targetPathsMap);
+            });
+        }).count();
         log.info("read {} lines", count);
     }
 
-    private HashMap<String, ReactionHandler> createReactionHandlerMap(Map<String, String> emojiMap) {
+    private static void checkWithReactionHandler(Message message, Map<String, ReactionHandler> reactionHandlerMap, Map<SourceUuid_Timestamp, List<Path>> targetPathsMap) {
+        val envelope = message.getEnvelope();
+        val reactionFromDataMessage = envelope.getDataMessage().getReaction();
+        val reactionFromSyncMessage = envelope.getSyncMessage().getSentMessage().getReaction();
+        val reaction = reactionFromDataMessage == null ? reactionFromSyncMessage : reactionFromDataMessage;
+
+        if (reaction == null) {
+            return;
+        }
+
+        val emoji = reaction.getEmoji();
+        val reactionHandler = reactionHandlerMap.get(emoji);
+
+        if (reactionHandler == null) {
+            return;
+        }
+
+        val lookupKey = new SourceUuid_Timestamp(reaction.getTargetAuthorUuid(), reaction.getTargetSentTimestamp());
+        targetPathsMap.get(lookupKey)
+                      .forEach(path -> reactionHandler.handle(path, envelope));
+    }
+
+    private Stream<String> streamMessagesFromExistingFiles() {
+        return messagesLogs.stream().filter(File::exists).map(File::toPath).flatMap(path -> {
+            try {
+                return Files.lines(path);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return Stream.empty();
+            }
+        });
+    }
+
+    private Map<String, ReactionHandler> createReactionHandlerMap(Map<String, String> emojiMap) {
         var reactionHandlerMap = new HashMap<String, ReactionHandler>();
         emojiMap.forEach((key, value) -> {
-                             Path baseReactionsPath = Path.of(movedAttachmentDir).resolve("reactions");
-                             Path reactionPath = baseReactionsPath.resolve(value)
-                                                                  .normalize();
-                             if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
-                                 throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
-                             } else {
-                                 reactionHandlerMap.put(key, new ReactionHandler(reactionPath));
-                             }
-                         }
-        );
+            Path baseReactionsPath = Path.of("reactions");
+            Path reactionPath = baseReactionsPath.resolve(value).normalize();
+            if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
+                throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
+            }
+
+            ReactionHandler reactionHandler = new ReactionHandler(Path.of(movedAttachmentDir), reactionPath);
+            reactionHandlerMap.put(key, reactionHandler);
+        });
         log.info("reaction handler map: {}", reactionHandlerMap);
         return reactionHandlerMap;
     }
