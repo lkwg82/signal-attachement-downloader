@@ -40,7 +40,8 @@ public class MainCommand implements Runnable {
     private boolean showDebugInfos;
 
 
-    @CommandLine.Option(names = {"--map-reaction-to-subfolder"}, description = "copy attachments based on emojis to subfolders")
+    @CommandLine.Option(names = {"--map-reaction-to-subfolder"}, description = "copy attachments based on emojis to subfolders, " +
+            "can also be added via ENVIRONMENT 'EMOJI_MAP_👍=keep_it', ...")
     private Map<String, String> emojiMap = new HashMap<>();
 
     @SneakyThrows
@@ -55,6 +56,7 @@ public class MainCommand implements Runnable {
                                                   Path.of(movedAttachmentDir),
                                                   group_dir_is_flat);
         MessageParser parser = new MessageParser();
+        addEmojiMapFromEnvironment(emojiMap);
         var reactionHandlerMap = createReactionHandlerMap(emojiMap);
 
         Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
@@ -76,6 +78,19 @@ public class MainCommand implements Runnable {
             });
         }).count();
         log.info("read {} lines", count);
+    }
+
+    private void addEmojiMapFromEnvironment(Map<String, String> emojiMap) {
+        System.getenv()
+              .entrySet()
+              .stream()
+              .filter(e -> e.getKey().startsWith("EMOJI_MAP_"))
+              .forEach(e -> {
+                  log.info("picks {}={}", e.getKey(), e.getValue());
+                  String emoji = e.getKey().replaceFirst("EMOJI_MAP_", "");
+                  String folder = e.getValue();
+                  emojiMap.put(emoji, folder);
+              });
     }
 
     private static void checkWithReactionHandler(Message message, Map<String, ReactionHandler> reactionHandlerMap, Map<SourceUuid_Timestamp, List<Path>> targetPathsMap) {
