@@ -1,6 +1,8 @@
 package de.lgohlke.signal.attachmentdownloader;
 
 import de.lgohlke.signal.attachmentdownloader.mapping.Reaction;
+import io.quarkus.runtime.Quarkus;
+import io.quarkus.runtime.QuarkusApplication;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -19,7 +21,7 @@ import java.util.stream.Stream;
 
 @CommandLine.Command
 @Slf4j
-public class MainCommand implements Runnable {
+public class MainCommand implements Runnable, QuarkusApplication {
     @CommandLine.Option(names = {"-d", "--signal-attachment-dir"}, description = "location of attachments of signal-cli", defaultValue = "$HOME/.local/share/signal-cli/attachments")
     private String signalAttachmentDirectory;
 
@@ -54,23 +56,7 @@ public class MainCommand implements Runnable {
                                                   Path.of(movedAttachmentDir),
                                                   group_dir_is_flat);
         MessageParser parser = new MessageParser();
-
-        var reactionHandlerMap = new HashMap<String, ReactionHandler>();
-        emojiMap.forEach((key, value) -> {
-                             Path baseReactionsPath = Path.of(movedAttachmentDir).resolve("reactions");
-                             Path reactionPath = baseReactionsPath.resolve(value)
-                                                                  .normalize();
-                             if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
-                                 throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
-                             } else {
-                                 reactionHandlerMap.put(key, new ReactionHandler(reactionPath));
-                             }
-                         }
-        );
-
-        System.out.println(emojiMap);
-        System.out.println(reactionHandlerMap);
-
+        var reactionHandlerMap = createReactionHandlerMap(emojiMap);
 
         Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
 
@@ -86,7 +72,7 @@ public class MainCommand implements Runnable {
                                      }
                                  })
                                  .peek(line -> {
-                                     System.out.println("line: " + line);
+                                     log.info("line: " + line);
                                      parser.parse(line)
                                            .ifPresent(message -> {
                                                List<Path> target_paths = attachmentMover.handle(message);
@@ -113,14 +99,36 @@ public class MainCommand implements Runnable {
                                            });
                                  })
                                  .count();
-        System.out.println("read " + count + " lines");
+        log.info("read {} lines", count);
+    }
+
+    private HashMap<String, ReactionHandler> createReactionHandlerMap(Map<String, String> emojiMap) {
+        var reactionHandlerMap = new HashMap<String, ReactionHandler>();
+        emojiMap.forEach((key, value) -> {
+                             Path baseReactionsPath = Path.of(movedAttachmentDir).resolve("reactions");
+                             Path reactionPath = baseReactionsPath.resolve(value)
+                                                                  .normalize();
+                             if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
+                                 throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
+                             } else {
+                                 reactionHandlerMap.put(key, new ReactionHandler(reactionPath));
+                             }
+                         }
+        );
+        log.info("reaction handler map: {}", reactionHandlerMap);
+        return reactionHandlerMap;
     }
 
     record SourceUuid_Timestamp(UUID source, Timestamp timestamp) {
     }
 
-    public static void main(String[] args) {
+    @Override
+    public int run(String... args) throws Exception {
         MainCommand command = new MainCommand();
+        return new CommandLine(command).execute(args);
+    }
+
+    public static void main(String... args) {
         String[] _args = new String[]{
                 "--map-reaction-to-subfolder=👍=keep_it",
                 "--map-reaction-to-subfolder=🎁=calendar",
@@ -128,7 +136,6 @@ public class MainCommand implements Runnable {
                 "--messages-log=messages.log.1",
                 "--messages-log=messages.log.2",
         };
-        int exitCode = new CommandLine(command).execute(_args);
-        System.exit(exitCode);
+        Quarkus.run(MainCommand.class, _args);
     }
 }
