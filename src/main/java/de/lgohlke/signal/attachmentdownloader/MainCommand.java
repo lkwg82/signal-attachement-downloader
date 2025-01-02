@@ -55,12 +55,13 @@ public class MainCommand implements Runnable {
         var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory),
                                                   Path.of(movedAttachmentDir),
                                                   group_dir_is_flat);
-        MessageParser parser = new MessageParser();
-        addEmojiMapFromEnvironment(emojiMap);
-        var reactionHandlerMap = createReactionHandlerMap(emojiMap);
+
+        var reactionHandlerMap = new ReactionHandlerFactory(emojiMap,
+                                                            Path.of(movedAttachmentDir)).createReactionHandlerMap();
 
         Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
 
+        MessageParser parser = new MessageParser();
         long count = streamMessagesFromExistingFiles().peek(line -> {
             if (line.contains("dataMessage") && (line.contains("reaction") || line.contains("filename"))) {
                 log.info("line: {}", line);
@@ -78,19 +79,6 @@ public class MainCommand implements Runnable {
             });
         }).count();
         log.info("read {} lines", count);
-    }
-
-    private void addEmojiMapFromEnvironment(Map<String, String> emojiMap) {
-        System.getenv()
-              .entrySet()
-              .stream()
-              .filter(e -> e.getKey().startsWith("EMOJI_MAP_"))
-              .forEach(e -> {
-                  log.info("picks {}={}", e.getKey(), e.getValue());
-                  String emoji = e.getKey().replaceFirst("EMOJI_MAP_", "");
-                  String folder = e.getValue();
-                  emojiMap.put(emoji, folder);
-              });
     }
 
     private static void checkWithReactionHandler(Message message, Map<String, ReactionHandler> reactionHandlerMap, Map<SourceUuid_Timestamp, List<Path>> targetPathsMap) {
@@ -132,22 +120,6 @@ public class MainCommand implements Runnable {
                                    return Stream.empty();
                                }
                            });
-    }
-
-    private Map<String, ReactionHandler> createReactionHandlerMap(Map<String, String> emojiMap) {
-        var reactionHandlerMap = new HashMap<String, ReactionHandler>();
-        emojiMap.forEach((key, value) -> {
-            Path baseReactionsPath = Path.of("reactions");
-            Path reactionPath = baseReactionsPath.resolve(value).normalize();
-            if (!reactionPath.startsWith(baseReactionsPath)) { // detect path traversal issue
-                throw new IllegalStateException("Sth fishy with the path: " + reactionPath);
-            }
-
-            ReactionHandler reactionHandler = new ReactionHandler(Path.of(movedAttachmentDir), reactionPath);
-            reactionHandlerMap.put(key, reactionHandler);
-        });
-        log.info("reaction handler map: {}", reactionHandlerMap);
-        return reactionHandlerMap;
     }
 
     record SourceUuid_Timestamp(UUID source, Timestamp timestamp) {
