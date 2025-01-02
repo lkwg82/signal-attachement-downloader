@@ -1,4 +1,4 @@
-FROM eclipse-temurin:17-jdk as builder
+FROM eclipse-temurin:21-jdk as builder
 
 #
 # build jre
