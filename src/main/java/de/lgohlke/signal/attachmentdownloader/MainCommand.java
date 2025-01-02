@@ -96,8 +96,13 @@ public class MainCommand implements Runnable {
         }
 
         val lookupKey = new SourceUuid_Timestamp(reaction.getTargetAuthorUuid(), reaction.getTargetSentTimestamp());
-        targetPathsMap.get(lookupKey)
-                      .forEach(path -> reactionHandler.handle(path, envelope));
+
+        List<Path> paths = targetPathsMap.get(lookupKey);
+        if (paths == null) {
+            log.warn("no original entry found");
+            return;
+        }
+        paths.forEach(path -> reactionHandler.handle(path, envelope));
     }
 
     private Stream<String> streamMessagesFromExistingFiles() {
