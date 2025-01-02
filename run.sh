@@ -55,6 +55,7 @@ docker compose up --build attachment-mover
 
 if [[ -n $RELEASE ]]; then
   timestamp=$(date "+%Y%m%d-%H%M%S")
+  git tag "$timestamp"
 
   signalCliVersion=$(docker history --no-trunc signal-cli | grep -v ^$ | grep SIGNAL_CLI_VERSION | cut -d= -f2 | cut -d\  -f1 | xargs)
   function tag_and_push(){
