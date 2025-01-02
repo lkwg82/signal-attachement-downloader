@@ -64,7 +64,7 @@ if [[ -n $RELEASE ]]; then
   tag_and_push signal-cli lkwg82/signal-attachment-mover:signal-cli
 
   tag_and_push attachment-mover-java lkwg82/signal-attachment-mover
-  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover:"$timestamp"
+  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover:mover-"$timestamp"
 else
   docker compose up --build bot
   docker compose up --build attachment-mover
