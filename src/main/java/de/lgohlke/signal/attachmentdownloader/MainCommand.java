@@ -70,15 +70,16 @@ public class MainCommand implements Runnable {
                                      }
                                  })
                                  .peek(line -> {
-                                     log.info("line: " + line);
+                                     log.info("line: {}", line);
                                      parser.parse(line)
                                            .ifPresent(message -> {
                                                List<Path> target_paths = attachmentMover.handle(message);
                                                if (!target_paths.isEmpty()) {
                                                    UUID sourceUuid = message.getEnvelope().getSourceUuid();
                                                    Timestamp timestamp = message.getEnvelope().getTimestamp();
-                                                   targetPathsMap.put(new SourceUuid_Timestamp(sourceUuid, timestamp),
-                                                                      target_paths);
+                                                   SourceUuid_Timestamp key = new SourceUuid_Timestamp(sourceUuid,
+                                                                                                       timestamp);
+                                                   targetPathsMap.put(key, target_paths);
                                                }
 
                                                Reaction reaction = message.getEnvelope().getDataMessage().getReaction();
@@ -92,8 +93,6 @@ public class MainCommand implements Runnable {
                                                        targetPathsMap.get(lookupKey).forEach(reactionHandler::handle);
                                                    }
                                                }
-
-
                                            });
                                  })
                                  .count();
