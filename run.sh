@@ -44,7 +44,7 @@ mkdir -p .m2_repo
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
-if ! docker run --rm -ti --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
+if ! docker run --rm -t --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
   echo "ERROR app failed" >&2
   cat "$log"
   exit 1
