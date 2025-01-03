@@ -1,6 +1,6 @@
 FROM debian:12-slim AS builder
 
-RUN apt-get update && apt-get install -y curl
+RUN apt-get update && apt-get install -y curl qrencode
 
 # based on https://www.redcube.de/update-version-in-variables-or-buildargs-in-dockerfiles-with-renovatebot/
 # renovate: datasource=github-releases depName=AsamK/signal-cli extractVersion=^v(?<version>.*)$
@@ -15,7 +15,11 @@ RUN signal-cli --version
 
 FROM debian:12-slim
 
-COPY --from=builder /usr/bin/signal-cli /usr/bin/signal-cli
+COPY --from=builder /usr/bin/signal-cli /usr/bin
+COPY --from=builder /usr/bin/qrencode /usr/bin
+COPY --from=builder /lib/x86_64-linux-gnu/libqrencode.so.4 /lib/x86_64-linux-gnu/
+COPY --from=builder /lib/x86_64-linux-gnu/libpng16.so.16 /lib/x86_64-linux-gnu/
+
 
 COPY entrypoint.sh /entrypoint.sh
 RUN touch -mt 197001010101 -at 197001010101 /entrypoint.sh
@@ -24,6 +28,7 @@ RUN useradd --uid 1000 -m user
 USER user
 
 # selftests
+RUN date | qrencode -t utf8
 RUN testNumber=+4912345689 \
     && signal-cli -u $testNumber receive 2>&1 | grep "not registered"
 
