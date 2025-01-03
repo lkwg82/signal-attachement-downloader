@@ -7,5 +7,6 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class GroupInfo {
     private String groupId;
+    private String groupName;
     private String type;
 }

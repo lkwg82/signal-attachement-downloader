@@ -10,15 +10,11 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class MoveRequestBuilderTest {
-    private final Path attachmentsOfSignal = Path.of("source");
-    private final Path attachmentsMoved = Path.of("target");
-    private final MoveRequestBuilder builder = new MoveRequestBuilder(attachmentsOfSignal,
-                                                                      attachmentsMoved,
-                                                                      false);
-    private final MoveRequestBuilder builderFlatGroup = new MoveRequestBuilder(attachmentsOfSignal,
-                                                                               attachmentsMoved,
-                                                                               true);
+public class ReplicateRequestBuilderTest {
+    private final Path sourcePath = Path.of("source");
+    private final Path targetPath = Path.of("target");
+    private final ReplicateRequestBuilder builder = new ReplicateRequestBuilder(sourcePath, targetPath, false);
+    private final ReplicateRequestBuilder builderFlatGroup = new ReplicateRequestBuilder(sourcePath, targetPath, true);
 
     @Test
     void should_handle_missing_filename() {
@@ -207,7 +203,7 @@ public class MoveRequestBuilderTest {
         assertThat(requests).isEmpty();
     }
 
-    private Message buildMessage(String rawMessage) {
+    private static Message buildMessage(String rawMessage) {
         Optional<Message> optionalMessage = new MessageParser().parse(rawMessage);
         if (optionalMessage.isPresent()) {
             return optionalMessage.get();

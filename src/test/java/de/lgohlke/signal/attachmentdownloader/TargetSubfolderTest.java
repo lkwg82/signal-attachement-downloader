@@ -22,7 +22,7 @@ public class TargetSubfolderTest {
         UUID sourceUuid = envelope.getSourceUuid();
         Path path = subFolderComputer.computePath(envelope);
 
-        assertThat(path.toString()).isEqualTo("direct/" + sourceUuid);
+        assertThat(path).hasToString("direct/" + sourceUuid);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TargetSubfolderTest {
 
         Path path = subFolderComputer.computePath(envelope);
 
-        assertThat(path.toString()).isEqualTo("groups/YWJj");
+        assertThat(path).hasToString("groups/YWJj");
     }
 
     @Test
@@ -55,7 +55,7 @@ public class TargetSubfolderTest {
 
         Path path = subFolderComputer.computePath(envelope);
 
-        assertThat(path.toString()).isEqualTo("groups/YWJjZA==");
+        assertThat(path).hasToString("groups/YWJjZA==");
     }
 
     private static @NotNull Envelope createRandomEnvelope() {
