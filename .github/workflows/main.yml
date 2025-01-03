@@ -28,7 +28,7 @@ jobs:
         with:
           path: ~/.m2_repo
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
-          restore-keys: ${{ runner.os }}-m2
+          restore-keys: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
       - name: Build and Test with Maven
         run: ./mvnw -Dmaven.repo.local=.m2_repo -B verify
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
