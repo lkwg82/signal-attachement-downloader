@@ -12,9 +12,11 @@ permissions:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request'
+    # if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
+      - name: test
+        run: echo ${{github.event}}
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
