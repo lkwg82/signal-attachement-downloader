@@ -1,0 +1,17 @@
+name: Create Pull Request on Push
+
+on:
+  push:
+    branches:
+      - '*'
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          branch: master
+          title: ${{ github.ref }}
