@@ -13,6 +13,7 @@ function ok() {
   echo "ok"
 }
 
+
 # signal-cli
 (
   app="signal-cli"
