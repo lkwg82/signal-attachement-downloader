@@ -9,15 +9,15 @@ import java.nio.file.Path;
 import java.util.List;
 
 @Slf4j
-public class AttachmentMover {
+public class AttachmentReplicator {
     private final Path attachmentsMoved;
     private final MoveRequestBuilder moveRequestBuilder;
 
-    public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved) {
+    public AttachmentReplicator(Path attachmentsOfSignal, Path attachmentsMoved) {
         this(attachmentsOfSignal, attachmentsMoved, false);
     }
 
-    public AttachmentMover(Path attachmentsOfSignal, Path attachmentsMoved, boolean flatGroupDir) {
+    public AttachmentReplicator(Path attachmentsOfSignal, Path attachmentsMoved, boolean flatGroupDir) {
         if (attachmentsMoved.equals(attachmentsOfSignal)) {
             throw new IllegalArgumentException("paths should be different: " + attachmentsOfSignal + " <> " + attachmentsMoved);
         }
@@ -74,17 +74,27 @@ public class AttachmentMover {
     }
 
     private static void moveAttachment(Path sourceFile, Path targetFile) throws IOException {
-        try {
-            if (targetFile.toFile()
-                          .exists()) {
-                log.info("already moved {} to {}", sourceFile, targetFile);
-            } else {
-                java.nio.file.Files.move(sourceFile, targetFile);
-                log.info("moved {} to {}", sourceFile, targetFile);
+//        if (!sourceFile.toFile().exists()) {
+//            throw new IllegalArgumentException(sourceFile + " is missing");
+//        }
+        System.out.println("target file: " + targetFile);
+        if (targetFile.toFile()
+                      .exists()) {
+            log.info("already moved {} to {}", sourceFile, targetFile);
+        } else {
+            try {
+                java.nio.file.Files.createLink(targetFile, sourceFile);
+            } catch (IOException e) {
+                log.error("linking failed: {} ", e.getMessage());
+                try {
+                    log.info("fallback to copying {}", targetFile);
+                    java.nio.file.Files.copy(sourceFile, targetFile);
+                } catch (IOException ex) {
+                    log.error("could not move {} to {}", sourceFile, targetFile);
+                    throw new RuntimeException(ex);
+                }
             }
-        } catch (IOException e) {
-            log.error("could not move {} to {}", sourceFile, targetFile);
-            throw e;
+            log.info("moved {} to {}", sourceFile, targetFile);
         }
     }
 

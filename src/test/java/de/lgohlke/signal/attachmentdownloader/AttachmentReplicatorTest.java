@@ -23,19 +23,23 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Fail.fail;
 
-public class AttachmentMoverTest {
+public class AttachmentReplicatorTest {
 
     private final File tempFolder = Files.newTemporaryFolder();
     private final Message message = createTestMessage();
 
+    private Path attachmentsOfSignal;
+
     @BeforeEach
     void setUp() {
+        //noinspection ResultOfMethodCallIgnored
         tempFolder.mkdirs();
+        attachmentsOfSignal = prepareSignalAttachmentPath();
     }
 
+
     @Test
-    void should_move_attachment_from_direct_message() throws IOException {
-        var attachmentsOfSignal = prepareSignalAttachmentPath();
+    void should_hardlink_attachment_instead_of_move() throws IOException {
         var attachmentsMoved = prepareMovedAttachmentPath();
 
         var movedAttachment = buildMovedAttachmentFile(message,
@@ -43,7 +47,23 @@ public class AttachmentMoverTest {
                                                        attachmentsMoved.resolve("direct"));
 
         // action
-        new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
+        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
+
+        Object attribute = java.nio.file.Files.getAttribute(movedAttachment.toPath(), "unix:nlink");
+        int hardlinks = Integer.valueOf("" + attribute);
+        assertThat(hardlinks).isEqualTo(2);
+    }
+
+    @Test
+    void should_move_attachment_from_direct_message() throws IOException {
+        var attachmentsMoved = prepareMovedAttachmentPath();
+
+        var movedAttachment = buildMovedAttachmentFile(message,
+                                                       attachmentsOfSignal,
+                                                       attachmentsMoved.resolve("direct"));
+
+        // action
+        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
 
         assertThat(movedAttachment).exists();
         assertThat(movedAttachment).isFile();
@@ -51,12 +71,12 @@ public class AttachmentMoverTest {
 
     @Test
     void should_accept_already_moved_attachment() throws IOException {
-        var attachmentsOfSignal = prepareSignalAttachmentPath();
         var attachmentsMoved = prepareMovedAttachmentPath();
         var attachment = createTestAttachment(attachmentsOfSignal, message);
 
         String filename = buildMovedFilename(message, attachment);
-        var movedAttachment = attachmentsMoved.resolve(message.getEnvelope()
+        var movedAttachment = attachmentsMoved.resolve("direct")
+                                              .resolve(message.getEnvelope()
                                                               .getSourceUuid().toString())
                                               .resolve(filename)
                                               .toFile();
@@ -64,7 +84,7 @@ public class AttachmentMoverTest {
         moveAttachmentToMovedFolder(attachmentsOfSignal, attachment, movedAttachment);
 
         // action
-        new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
+        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
 
         assertThat(movedAttachment).exists();
         assertThat(movedAttachment).isFile();
@@ -79,14 +99,13 @@ public class AttachmentMoverTest {
                .getDataMessage()
                .setGroupInfo(groupInfo);
 
-        var attachmentsOfSignal = prepareSignalAttachmentPath();
         var attachmentsMoved = prepareMovedAttachmentPath();
         var attachment = createTestAttachment(attachmentsOfSignal, message);
 
         var movedAttachment = buildMovedAttachmentFileForGroup(groupInfo, attachmentsMoved, attachment);
 
         // action
-        new AttachmentMover(attachmentsOfSignal, attachmentsMoved).handle(message);
+        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
 
         assertThat(movedAttachment).exists();
         assertThat(movedAttachment).isFile();
@@ -95,7 +114,7 @@ public class AttachmentMoverTest {
     @Test
     void should_fail_on_wrong_signal_attachment_dir() {
         try {
-            new AttachmentMover(Path.of("a"), Path.of("b"));
+            new AttachmentReplicator(Path.of("a"), Path.of("b"));
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage()).startsWith("could not find signal attachment path:");
@@ -110,7 +129,7 @@ public class AttachmentMoverTest {
                                  .toFile();
             file.createNewFile();
 
-            new AttachmentMover(file.toPath(), Path.of("b"));
+            new AttachmentReplicator(file.toPath(), Path.of("b"));
             fail("should fail");
         } catch (IllegalArgumentException | IOException e) {
             assertThat(e.getMessage()).startsWith("signal attachment path should be a directory");
@@ -131,7 +150,7 @@ public class AttachmentMoverTest {
                                  .toFile();
             file.createNewFile();
 
-            new AttachmentMover(attachmentsOfSignal.toPath(), file.toPath());
+            new AttachmentReplicator(attachmentsOfSignal.toPath(), file.toPath());
             fail("should fail");
         } catch (IllegalArgumentException | IOException e) {
             assertThat(e.getMessage()).startsWith("moved attachment path should be a directory");
@@ -141,7 +160,7 @@ public class AttachmentMoverTest {
     @Test
     void should_detect_same_paths() {
         try {
-            new AttachmentMover(Path.of("a"), Path.of("a"));
+            new AttachmentReplicator(Path.of("a"), Path.of("a"));
             fail("should fail");
         } catch (IllegalArgumentException e) {
             assertThat(e.getMessage()).startsWith("paths should be different");
