@@ -1,6 +1,6 @@
 FROM debian:12-slim AS builder
 
-RUN apt-get update && apt-get install --no-install-recommends -y curl qrencode
+RUN apt-get update && apt-get install -y curl qrencode
 
 # based on https://www.redcube.de/update-version-in-variables-or-buildargs-in-dockerfiles-with-renovatebot/
 # renovate: datasource=github-releases depName=AsamK/signal-cli extractVersion=^v(?<version>.*)$
