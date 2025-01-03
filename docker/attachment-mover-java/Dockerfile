@@ -24,7 +24,7 @@ COPY src src
 
 ARG mvn="./mvnw -Dmaven.repo.local=.m2_repo"
 
-RUN $mvn -Dmaven.repo.local=.m2_repo clean verify
+RUN $mvn clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
 
 WORKDIR /build/target
