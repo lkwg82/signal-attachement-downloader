@@ -22,7 +22,7 @@ function ok() {
 
   info "testing ... "
   log=$(mktemp)
-  if ! docker run --rm -ti --entrypoint signal-cli -w /tmp signal-cli --version >"$log"; then
+  if ! docker run --rm -t --entrypoint signal-cli -w /tmp signal-cli --version >"$log"; then
     echo "ERROR signal-cli failed" >&2
     sed -e 's#^#\t#' "$log"
     exit 1
@@ -31,7 +31,7 @@ function ok() {
 
   info "exit code testing ... "
   log=$(mktemp)
-  if docker run --rm -ti --entrypoint signal-cli signal-cli -u +49123456 receive >"$log" 2>&1; then
+  if docker run --rm -t --entrypoint signal-cli signal-cli -u +49123456 receive >"$log" 2>&1; then
     echo "ERROR signal-cli failed" >&2
     sed -e 's#^#\t#' "$log"
     exit 1
@@ -39,19 +39,21 @@ function ok() {
   ok
 )
 
-mvnd -Dmaven.repo.local=.m2_repo clean verify
+#mvnd -Dmaven.repo.local=.m2_repo clean verify
+mkdir -p .m2_repo
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
-if ! docker run --rm -ti --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
+if ! docker run --rm -t --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
   echo "ERROR app failed" >&2
   cat "$log"
   exit 1
 fi
 
-
-docker compose up --build bot
-docker compose up --build attachment-mover
+if [[ -z "$CI" ]]; then
+  docker compose up --build bot
+  docker compose up --build attachment-mover
+fi
 
 if [[ -n $RELEASE ]]; then
   timestamp=$(date "+%Y%m%d-%H%M%S")
