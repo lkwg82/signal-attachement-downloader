@@ -24,7 +24,7 @@ public class MainCommand implements Runnable {
     @CommandLine.Option(names = {"-d", "--signal-attachment-dir"}, description = "location of attachments of signal-cli", defaultValue = "$HOME/.local/share/signal-cli/attachments")
     private String signalAttachmentDirectory;
 
-    @CommandLine.Option(names = {"-t", "--moved-attachment-dir"}, description = "location of attachments to be moved to", defaultValue = "moved_attachments", required = true)
+    @CommandLine.Option(names = {"-t", "--moved-attachment-dir"}, description = "location of attachments to be replicated to", defaultValue = "moved_attachments", required = true)
     private String movedAttachmentDir;
 
     @CommandLine.Option(names = {"-m", "--messages-log"}, description = "location of messages log", defaultValue = "messages.log", required = true)
@@ -52,9 +52,9 @@ public class MainCommand implements Runnable {
         log.info("reading from {} ...", messagesLogs.stream().map(File::toString).collect(Collectors.joining(",")));
         log.info("search in {} for attachments", signalAttachmentDirectory);
 
-        var attachmentMover = new AttachmentMover(Path.of(signalAttachmentDirectory),
-                                                  Path.of(movedAttachmentDir),
-                                                  group_dir_is_flat);
+        var attachmentMover = new AttachmentReplicator(Path.of(signalAttachmentDirectory),
+                                                       Path.of(movedAttachmentDir),
+                                                       group_dir_is_flat);
 
         // have problems to configure via cli
         val preconfiguredEmojiMap = new HashMap<>(emojiMap);
