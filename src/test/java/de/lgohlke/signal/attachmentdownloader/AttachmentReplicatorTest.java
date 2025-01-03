@@ -118,10 +118,10 @@ public class AttachmentReplicatorTest {
         //noinspection ResultOfMethodCallIgnored
         file.createNewFile();
 
-        val sourceFolder = file.toPath();
-        val targetFolder = Path.of("b");
+        val sourceFolder2 = file.toPath();
+        val targetFolder2 = Path.of("b");
 
-        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, targetFolder))
+        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder2, targetFolder2))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("signal attachment path should be a directory");
     }
@@ -134,8 +134,9 @@ public class AttachmentReplicatorTest {
                                .toFile();
         //noinspection ResultOfMethodCallIgnored
         target.createNewFile();
+        Path localTargetFolder = target.toPath();
 
-        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, target.toPath()))
+        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, localTargetFolder))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageStartingWith("moved attachment path should be a directory");
     }
@@ -185,18 +186,16 @@ public class AttachmentReplicatorTest {
     }
 
     private Message createTestMessage() {
-        var message = new Message();
         var envelope = new Envelope();
         envelope.setSourceUuid(UUID.fromString("f0856790-6342-4610-a018-1588e741155e"));
-        var dataMessage = new DataMessage();
 
-        envelope.setDataMessage(dataMessage);
-        message.setEnvelope(envelope);
+        envelope.setDataMessage(new DataMessage());
+        var _message = new Message();
+        _message.setEnvelope(envelope);
 
-        assertThat(message.getEnvelope()
-                          .getDataMessage()
-                          .getGroupInfo()).isNull();
+        assertThat(envelope.getDataMessage()
+                           .getGroupInfo()).isNull();
 
-        return message;
+        return _message;
     }
 }
