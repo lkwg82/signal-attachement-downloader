@@ -6,6 +6,7 @@ on:
       - '*'
 
 permissions:
+  contents: write
   pull-requests: write
 
 jobs:
@@ -18,4 +19,4 @@ jobs:
         with:
           base: master
           branch: ${{ github.ref }}
-          title: ${{ github.ref }}
+          title: ${{ github.ref_name }}
