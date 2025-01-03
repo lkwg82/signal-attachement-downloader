@@ -4,7 +4,7 @@ FROM eclipse-temurin:21.0.5_11-jdk AS builder
 # build jre
 #
 RUN jlink --add-modules ALL-MODULE-PATH --output jre \
-          --strip-debug --no-man-pages --no-header-files --compress=2 \
+          --strip-debug --no-man-pages --no-header-files --compress zip-9 \
     && find /jre | xargs -P100 -n1 touch -mt 197001010101 -at 197001010101 \
     && find /jre | xargs -P100 -n1 chmod 0755 \
     && jre/bin/java -version # selftest
