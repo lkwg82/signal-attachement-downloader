@@ -1,0 +1,36 @@
+name: Create Pull Request on Push
+
+on:
+  push:
+    branches:
+      - '*'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    # if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v2
+      - name: test
+        run: echo ${{github.event_name}}
+      - name: Check for existing Pull Request
+        id: check-pr
+        run: |
+          PR_COUNT=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+          "https://api.github.com/repos/${{ github.repository }}/pulls?state=open&head=${{ github.repository_owner }}:${{ github.ref_name }}" | jq '. | length')
+          echo "pr_count=$PR_COUNT" >> $GITHUB_ENV
+
+      - name: Debug PR Count
+        run: echo ${{ env.pr_count }}
+      - name: Create Pull Request
+        if: env.pr_count == '0' # Nur ausführen, wenn keine PRs existieren
+        uses: peter-evans/create-pull-request@v3
+        with:
+          base: master
+          branch: ${{ github.ref }}
+          title: ${{ github.ref_name }}
+          draft: true
