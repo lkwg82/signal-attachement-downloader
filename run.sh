@@ -40,6 +40,7 @@ function ok() {
 )
 
 #mvnd -Dmaven.repo.local=.m2_repo clean verify
+mkdir -p .m2_repo
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
