@@ -40,12 +40,13 @@ function ok() {
   ok
 )
 
+
 #mvnd -Dmaven.repo.local=.m2_repo clean verify
 mkdir -p .m2_repo
-docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
+docker build -t attachment-mover -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
-if ! docker run --rm -t --entrypoint java attachment-mover-java -jar quarkus-run.jar -h >"$log"; then
+if ! docker run --rm -t --entrypoint java attachment-mover -jar quarkus-run.jar -h >"$log"; then
   echo "ERROR app failed" >&2
   cat "$log"
   exit 1
@@ -56,21 +57,3 @@ if [[ -z "$CI" ]]; then
   docker compose up --build attachment-mover
 fi
 
-if [[ -n $RELEASE ]]; then
-  timestamp=$(date "+%Y%m%d-%H%M%S")
-  git tag "$timestamp"
-
-  signalCliVersion=$(docker history --no-trunc signal-cli | grep -v ^$ | grep SIGNAL_CLI_VERSION | cut -d= -f2 | cut -d\  -f1 | xargs)
-  function tag_and_push(){
-    app="release"
-    docker tag "$1" "$2"
-    info "pushing $2"
-    echo
-    docker push "$2"
-  }
-  tag_and_push signal-cli lkwg82/signal-attachment-mover:signal-cli-"$signalCliVersion"
-  tag_and_push signal-cli lkwg82/signal-attachment-mover:signal-cli
-
-  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover
-  tag_and_push attachment-mover-java lkwg82/signal-attachment-mover:mover-"$timestamp"
-fi
