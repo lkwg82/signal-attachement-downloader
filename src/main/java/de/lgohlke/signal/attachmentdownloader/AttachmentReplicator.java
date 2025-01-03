@@ -87,7 +87,7 @@ public class AttachmentReplicator {
                     java.nio.file.Files.copy(sourceFile, targetFile);
                 } catch (IOException ex) {
                     log.error("could not move {} to {}", sourceFile, targetFile);
-                    throw new RuntimeException(ex);
+                    throw ex;
                 }
             }
             log.info("moved {} to {}", sourceFile, targetFile);
