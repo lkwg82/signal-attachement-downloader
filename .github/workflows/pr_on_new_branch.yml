@@ -12,6 +12,7 @@ permissions:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     steps:
       - uses: actions/checkout@v2
       - name: Create Pull Request
@@ -20,3 +21,4 @@ jobs:
           base: master
           branch: ${{ github.ref }}
           title: ${{ github.ref_name }}
+          draft: true
