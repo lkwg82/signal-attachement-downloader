@@ -1,9 +1,13 @@
 package de.lgohlke.signal.attachmentdownloader;
 
+import de.lgohlke.signal.attachmentdownloader.mapping.GroupInfo;
 import de.lgohlke.signal.attachmentdownloader.mapping.Message;
+import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -48,11 +52,31 @@ public class AttachmentReplicator {
         }
 
         moveRequests.forEach(request -> {
-            createTargetDirectory(request.target());
-            moveAttachment(request.source(), request.target());
+            Path target = request.target();
+            createTargetDirectory(target);
+            GroupInfo groupInfo = message.getEnvelope().getDataMessage().getGroupInfo();
+            if (groupInfo != null) {
+                updateOrCreateGroupnameFile(target.getParent(), groupInfo.getGroupName());
+            }
+            moveAttachment(request.source(), target);
         });
 
         return moveRequests.stream().map(ReplicateRequestBuilder.ReplicateRequest::target).toList();
+    }
+
+    @SneakyThrows
+    private void updateOrCreateGroupnameFile(Path targetDirectory, @NonNull String groupName) {
+        Path path = targetDirectory.resolve(".groupname");
+        if (path.toFile().exists()) {
+            String content = Files.readString(path);
+            if (groupName.equals(content)) {
+                return;
+            }
+            log.info("update groupname file in {}, from {} to  {}", targetDirectory, content, groupName);
+        } else {
+            log.info("create groupname file in {}: {}", targetDirectory, groupName);
+        }
+        Files.writeString(path, groupName);
     }
 
     private void createTargetDirectory(Path targetFile) {
