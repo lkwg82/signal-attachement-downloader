@@ -19,8 +19,9 @@ if [[ ${#dry_run} == 0 ]]; then
   ./run.sh
 fi
 
-timestamp=$(date "+%Y%m%d-%H%M%S")
-$dry_run git tag "$timestamp"
+timestamp=${RELEASE_TIMESTAMP:-$(date "+%Y%m%d-%H%M%S")}
+$dry_run git tag "$timestamp" || echo "already tagged"
+$dry_run git push --tags
 
 signalCliVersion=$(docker history --no-trunc signal-cli | grep -v ^$ | grep SIGNAL_CLI_VERSION | cut -d= -f2 | cut -d\  -f1 | xargs)
 
@@ -31,7 +32,7 @@ function tag_and_push(){
 \`docker pull $2\` ($(docker images "$1" --format "{{.Size}}"))
 EOF
   $dry_run docker tag "$1" "$2"
-  $dry_run "pushing $2"
+  $dry_run echo "pushing $2"
   $dry_run echo
   $dry_run docker push "$2"
 
@@ -54,7 +55,7 @@ function log_commits(){
 release="test"
 if [[ ${#dry_run} == 0 ]]; then
   release="$timestamp"
-  gh release create "$release" --pre-release --generate-notes
+  gh release create "$release" --prerelease --generate-notes
 else
   if gh release list --json tagName | jq -e '.[].tagName | select(. == "'"$release"'")'; then
     gh release delete "$release" --cleanup-tag --yes \
@@ -81,5 +82,5 @@ EOF
 gh release edit "$release" --notes-file "$body_file"
 
 if [[ ${#dry_run} == 0 ]]; then
-  gh release edit "$release" --latest
+  gh release edit "$release" --latest --prerelease=false
 fi
