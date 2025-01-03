@@ -67,13 +67,13 @@ public class AttachmentReplicatorTest {
         var attachment = createTestAttachment(sourceFolder, message);
 
         String filename = buildReplicatedFilename(message, attachment);
-        var movedAttachment = targetFolder.resolve("direct")
-                                          .resolve(message.getEnvelope()
-                                                          .getSourceUuid().toString())
-                                          .resolve(filename)
-                                          .toFile();
+        var targetFile = targetFolder.resolve("direct")
+                                     .resolve(message.getEnvelope()
+                                                     .getSourceUuid().toString())
+                                     .resolve(filename)
+                                     .toFile();
 
-        moveAttachmentToMovedFolder(sourceFolder, attachment, movedAttachment);
+        moveAttachmentToMovedFolder(sourceFolder, attachment, targetFile);
 
         // action
         List<Path> paths = replicator.handle(message);
@@ -86,6 +86,7 @@ public class AttachmentReplicatorTest {
     void should_move_attachment_from_group_message() throws IOException {
         var groupInfo = new GroupInfo();
         groupInfo.setGroupId("asdas/dasd");
+        groupInfo.setGroupName("egal");
         groupInfo.setType("DELIVER");
         message.getEnvelope()
                .getDataMessage()
@@ -97,6 +98,48 @@ public class AttachmentReplicatorTest {
 
         assertThat(paths.getFirst()).exists();
         assertThat(paths.getFirst().toFile()).isFile();
+    }
+
+    @Test
+    void should_create_group_name_marker() throws IOException {
+        var groupInfo = new GroupInfo();
+        groupInfo.setGroupId(UUID.randomUUID().toString());
+        groupInfo.setType("DELIVER");
+        message.getEnvelope()
+               .getDataMessage()
+               .setGroupInfo(groupInfo);
+        Attachment testAttachment = createTestAttachment(sourceFolder, message);
+        message.getEnvelope().getDataMessage().setAttachments(List.of(testAttachment));
+
+        groupInfo.setGroupName("test");
+        List<Path> paths = replicator.handle(message);
+
+        Path groupNameFile = paths.getFirst().getParent().resolve(".groupname");
+        assertThat(groupNameFile).exists();
+        assertThat(groupNameFile.toFile()).isFile();
+        assertThat(groupNameFile.toFile()).hasContent("test\n");
+    }
+
+    @Test
+    void should_update_group_name_marker() throws IOException {
+        var groupInfo = new GroupInfo();
+        groupInfo.setGroupId(UUID.randomUUID().toString());
+        groupInfo.setType("DELIVER");
+        message.getEnvelope()
+               .getDataMessage()
+               .setGroupInfo(groupInfo);
+        Attachment testAttachment = createTestAttachment(sourceFolder, message);
+        message.getEnvelope().getDataMessage().setAttachments(List.of(testAttachment));
+
+        groupInfo.setGroupName("test");
+        List<Path> paths = replicator.handle(message);
+        Path groupNameFile = paths.getFirst().getParent().resolve(".groupname");
+        assertThat(groupNameFile.toFile()).hasContent("test\n");
+
+        // update
+        groupInfo.setGroupName("test2");
+        replicator.handle(message);
+        assertThat(groupNameFile.toFile()).hasContent("test2\n");
     }
 
     @Test
@@ -148,12 +191,12 @@ public class AttachmentReplicatorTest {
                 .hasMessageStartingWith("paths should be different");
     }
 
-    private void moveAttachmentToMovedFolder(Path attachmentsOfSignal, Attachment attachment, File movedAttachment) throws IOException {
-        var sourcePath = attachmentsOfSignal.resolve(attachment.getId());
+    private void moveAttachmentToMovedFolder(Path sourceFolder, Attachment attachment, File targetFile) throws IOException {
+        var sourcePath = sourceFolder.resolve(attachment.getId());
         //noinspection ResultOfMethodCallIgnored
-        movedAttachment.getParentFile()
-                       .mkdirs();
-        java.nio.file.Files.move(sourcePath, movedAttachment.toPath());
+        targetFile.getParentFile()
+                  .mkdirs();
+        java.nio.file.Files.move(sourcePath, targetFile.toPath());
         assertThat(sourcePath).doesNotExist();
     }
 

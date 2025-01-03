@@ -47,7 +47,7 @@ COPY --from=builder /build/target/quarkus-app/quarkus quarkus
 COPY --from=builder /build/target/quarkus-app/lib lib
 COPY --from=builder /build/target/quarkus-app/app app
 
-ADD docker/attachment-mover-java/entrypoint.sh /entrypoint.sh
+COPY docker/attachment-mover-java/entrypoint.sh /entrypoint.sh
 
 RUN useradd --uid 1000  user
 USER user

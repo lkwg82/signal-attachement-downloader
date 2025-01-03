@@ -15,7 +15,6 @@ public class ReactionHandlerFactory {
 
     public ReactionHandlerFactory(Map<String, String> emojiMap, Path movedAttachmentPath) {
         this.emojiMap = new HashMap<>(emojiMap);
-        ;
         this.movedAttachmentPath = movedAttachmentPath;
     }
 

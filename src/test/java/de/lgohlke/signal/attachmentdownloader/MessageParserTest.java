@@ -1,6 +1,7 @@
 package de.lgohlke.signal.attachmentdownloader;
 
 import de.lgohlke.signal.attachmentdownloader.mapping.Message;
+import de.lgohlke.signal.attachmentdownloader.mapping.SentMessage;
 import lombok.val;
 import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
@@ -101,7 +102,9 @@ public class MessageParserTest {
                 """;
         Optional<Message> messageOptional = messageParser.parse(json);
         assertThat(messageOptional).isNotEmpty();
-        assertThat(messageOptional.get().getEnvelope().getSyncMessage().getSentMessage().getReaction()
-                                  .getEmoji()).isEqualTo("👍");
+        SentMessage sentMessage = messageOptional.get().getEnvelope().getSyncMessage().getSentMessage();
+        assertThat(sentMessage.getReaction()
+                              .getEmoji()).isEqualTo("👍");
+        assertThat(sentMessage.getGroupInfo().getGroupName()).isEqualTo("test");
     }
 }

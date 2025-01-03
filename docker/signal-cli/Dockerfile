@@ -17,7 +17,7 @@ FROM debian:12-slim
 
 COPY --from=builder /usr/bin/signal-cli /usr/bin/signal-cli
 
-ADD entrypoint.sh /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
 RUN touch -mt 197001010101 -at 197001010101 /entrypoint.sh
 
 RUN useradd --uid 1000 -m user
