@@ -31,7 +31,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       - name: Build and Test with Maven
-        run: ./mvnw -Dmaven.repo.local=.m2" -B verify
+        run: ./mvnw -Dmaven.repo.local=.m2 -B verify
   docker:
     # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
     runs-on: ubuntu-24.04
