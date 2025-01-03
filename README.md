@@ -1,3 +1,7 @@
+![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/lkwg82/signal-attachement-downloader/main.yml)
+![GitHub Tag](https://img.shields.io/github/v/tag/lkwg82/signal-attachement-downloader)
+
+
 # build
 
 ```
