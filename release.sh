@@ -23,7 +23,7 @@ timestamp=${RELEASE_TIMESTAMP:-$(date "+%Y%m%d-%H%M%S")}
 $dry_run git tag "$timestamp" || echo "already tagged"
 $dry_run git push --tags
 
-signalCliVersion=$(docker history --no-trunc signal-cli | grep -v ^$ | grep SIGNAL_CLI_VERSION | cut -d= -f2 | cut -d\  -f1 | xargs)
+signalCliVersion=$(docker run --rm -t --entrypoint signal-cli signal-cli --version | cut -d\  -f2)
 
 docker_assets=$(mktemp)
 
