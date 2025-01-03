@@ -11,12 +11,12 @@ import java.util.List;
 
 @Slf4j
 @RequiredArgsConstructor
-class MoveRequestBuilder {
-    private final Path attachmentsOfSignal;
-    private final Path attachmentsMoved;
+class ReplicateRequestBuilder {
+    private final Path sourceFolder;
+    private final Path targetFolder;
     private final Boolean flatGroupDir;
 
-    public List<MoveRequest> build(Message message) {
+    public List<ReplicateRequest> build(Message message) {
         var envelope = message.getEnvelope();
         var dataMessage = envelope.getDataMessage();
 
@@ -32,29 +32,32 @@ class MoveRequestBuilder {
         }
         TargetSubfolderComputer subfolderComputer = new TargetSubfolderComputer();
         Path computedPath = subfolderComputer.computePath(envelope);
-        Path attachmentsMovedPath = attachmentsMoved.resolve(computedPath);
+        Path targetPath = targetFolder.resolve(computedPath);
 
-        List<MoveRequest> moveRequests = new ArrayList<>();
+        List<ReplicateRequest> moveRequests = new ArrayList<>();
         for (var attachment : attachments) {
             val id = attachment.getId();
 
-            var sourceFile = attachmentsOfSignal.resolve(id);
+            var sourceFile = sourceFolder.resolve(id);
 
             String filename = new TargetAttachmentFilename(timestamp, id).createFilename();
             Path targetFile;
             if (dataMessage.getGroupInfo() == null) {
-                targetFile = attachmentsMovedPath.resolve(filename);
+                targetFile = targetPath.resolve(filename);
             } else {
                 if (flatGroupDir) {
-                    targetFile = attachmentsMovedPath.resolve(filename);
+                    targetFile = targetPath.resolve(filename);
                 } else {
                     String sourceUUid = envelope.getSourceUuid().toString();
-                    targetFile = attachmentsMovedPath.resolve(sourceUUid)
-                                                     .resolve(filename);
+                    targetFile = targetPath.resolve(sourceUUid)
+                                           .resolve(filename);
                 }
             }
-            moveRequests.add(new MoveRequest(sourceFile, targetFile));
+            moveRequests.add(new ReplicateRequest(sourceFile, targetFile));
         }
         return moveRequests;
+    }
+
+    static record ReplicateRequest(Path source, Path target) {
     }
 }
