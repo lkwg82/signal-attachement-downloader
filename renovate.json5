@@ -3,6 +3,7 @@
   extends: [
     'config:recommended',
     'helpers:pinGitHubActionDigests',
+    'helpers:pinGitHubActionDigests2',
   ],
   customManagers: [
     {
