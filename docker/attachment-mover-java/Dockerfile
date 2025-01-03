@@ -16,7 +16,8 @@ RUN mkdir /build
 WORKDIR /build
 
 COPY .m2_repo .m2_repo
-
+RUN ls -asl .m2_repo
+RUN exit 1
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
