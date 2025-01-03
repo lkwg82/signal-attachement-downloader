@@ -17,9 +17,7 @@ function ok() {
 # signal-cli
 (
   app="signal-cli"
-  cd docker/signal-cli
-  signalCliVersion=$(grep ^ARG Dockerfile | grep "SIGNAL_CLI_VERSION" | cut -d= -f2)
-  docker build -t signal-cli .
+  docker build -t signal-cli docker/signal-cli
 
   info "testing ... "
   log=$(mktemp)
@@ -41,8 +39,12 @@ function ok() {
 )
 
 
-#mvnd -Dmaven.repo.local=.m2_repo clean verify
-mkdir -p .m2_repo
+if [[ -z "$CI" ]]; then
+  mvnd -Dmaven.repo.local=.m2_repo clean verify
+else
+  mkdir -p .m2_repo
+fi
+
 docker build -t attachment-mover -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
