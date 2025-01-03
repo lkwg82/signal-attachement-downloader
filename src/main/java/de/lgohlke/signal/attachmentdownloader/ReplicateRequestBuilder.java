@@ -14,7 +14,7 @@ import java.util.List;
 class ReplicateRequestBuilder {
     private final Path sourceFolder;
     private final Path targetFolder;
-    private final Boolean flatGroupDir;
+    private final boolean flatGroupDir;
 
     public List<ReplicateRequest> build(Message message) {
         var envelope = message.getEnvelope();

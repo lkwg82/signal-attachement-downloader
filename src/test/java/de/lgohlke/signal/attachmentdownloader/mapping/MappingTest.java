@@ -3,6 +3,7 @@ package de.lgohlke.signal.attachmentdownloader.mapping;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.quarkus.test.junit.QuarkusTest;
 import lombok.SneakyThrows;
+import org.intellij.lang.annotations.Language;
 import org.junit.jupiter.api.Test;
 
 import java.sql.Timestamp;
@@ -157,6 +158,7 @@ public class MappingTest {
     @Test
     @SneakyThrows
     void should_handle_syncMessage() {
+        @Language("JSON")
         var data = """
                 {"envelope":{"source":"+493334299307","sourceDevice":3,"timestamp":1628071748623,"syncMessage":{"sentMessage":{"timestamp":1628071748623,"message":"⏳ [6410c2]","expiresInSeconds":86400,"viewOnce":false,"mentions":[],"attachments":[],"contacts":[],"groupInfo":{"groupId":"TITxYXAWoi2NHsDAFiKvpaFVGosLwo/Fal5StbhEAD8=","type":"DELIVER"},"destination":null}}}}
                 """;
@@ -166,6 +168,7 @@ public class MappingTest {
     @Test
     @SneakyThrows
     void should_handle_receiptMessage() {
+        @Language("JSON")
         var data = """
                 {"envelope":{"source":"+491734982893","sourceDevice":2,"timestamp":1628071749765,"receiptMessage":{"when":1628071749765,"isDelivery":true,"isRead":false,"timestamps":[1628071748623]}}}
                 """;

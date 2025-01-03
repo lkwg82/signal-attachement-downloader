@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,7 +35,7 @@ public class MainCommand implements Runnable {
     private boolean helpRequested;
 
     @CommandLine.Option(names = {"--flat-group-dir"}, description = "when set false, in a group directory each senders gets a separate subfolder", defaultValue = "true")
-    private boolean group_dir_is_flat;
+    private boolean groupDirIsFlat;
 
     @CommandLine.Option(names = {"--debug"}, description = "show additional debug messages")
     private boolean showDebugInfos;
@@ -54,7 +55,7 @@ public class MainCommand implements Runnable {
 
         var attachmentMover = new AttachmentReplicator(Path.of(signalAttachmentDirectory),
                                                        Path.of(movedAttachmentDir),
-                                                       group_dir_is_flat);
+                                                       groupDirIsFlat);
 
         // have problems to configure via cli
         val preconfiguredEmojiMap = new HashMap<>(emojiMap);
@@ -63,29 +64,33 @@ public class MainCommand implements Runnable {
         var reactionHandlerMap = new ReactionHandlerFactory(preconfiguredEmojiMap,
                                                             Path.of(movedAttachmentDir)).createReactionHandlerMap();
 
-        Map<SourceUuid_Timestamp, List<Path>> targetPathsMap = new HashMap<>();
+        Map<SourceUuidTimestamp, List<Path>> targetPathsMap = new HashMap<>();
 
         MessageParser parser = new MessageParser();
-        long count = streamMessagesFromExistingFiles().peek(line -> {
-            if (line.contains("dataMessage") && (line.contains("reaction") || line.contains("filename"))) {
-                log.info("line: {}", line);
-            }
-            parser.parse(line).ifPresent(message -> {
-                List<Path> target_paths = attachmentMover.handle(message);
-                if (!target_paths.isEmpty()) {
-                    UUID sourceUuid = message.getEnvelope().getSourceUuid();
-                    Timestamp timestamp = message.getEnvelope().getTimestamp();
-                    SourceUuid_Timestamp key = new SourceUuid_Timestamp(sourceUuid, timestamp);
-                    targetPathsMap.put(key, target_paths);
-                }
+        val count = new AtomicInteger();
+        streamMessagesFromExistingFiles()
+                .forEach(line -> {
+                    if (line.contains("dataMessage") && (line.contains("reaction") || line.contains("filename"))) {
+                        log.info("line: {}", line);
+                    }
+                    parser.parse(line).ifPresent(message -> {
+                        List<Path> targetPaths = attachmentMover.handle(message);
+                        if (!targetPaths.isEmpty()) {
+                            UUID sourceUuid = message.getEnvelope().getSourceUuid();
+                            Timestamp timestamp = message.getEnvelope().getTimestamp();
+                            SourceUuidTimestamp key = new SourceUuidTimestamp(sourceUuid, timestamp);
+                            targetPathsMap.put(key, targetPaths);
+                        }
 
-                checkWithReactionHandler(message, reactionHandlerMap, targetPathsMap);
-            });
-        }).count();
+                        checkWithReactionHandler(message, reactionHandlerMap, targetPathsMap);
+
+                    });
+                    count.incrementAndGet();
+                });
         log.info("read {} lines", count);
     }
 
-    private static void checkWithReactionHandler(Message message, Map<String, ReactionHandler> reactionHandlerMap, Map<SourceUuid_Timestamp, List<Path>> targetPathsMap) {
+    private static void checkWithReactionHandler(Message message, Map<String, ReactionHandler> reactionHandlerMap, Map<SourceUuidTimestamp, List<Path>> targetPathsMap) {
         val envelope = message.getEnvelope();
         val reactionFromDataMessage = envelope.getDataMessage().getReaction();
         val reactionFromSyncMessage = envelope.getSyncMessage().getSentMessage().getReaction();
@@ -102,7 +107,7 @@ public class MainCommand implements Runnable {
             return;
         }
 
-        val lookupKey = new SourceUuid_Timestamp(reaction.getTargetAuthorUuid(), reaction.getTargetSentTimestamp());
+        val lookupKey = new SourceUuidTimestamp(reaction.getTargetAuthorUuid(), reaction.getTargetSentTimestamp());
 
         List<Path> paths = targetPathsMap.get(lookupKey);
         if (paths == null) {
@@ -126,6 +131,6 @@ public class MainCommand implements Runnable {
                            });
     }
 
-    record SourceUuid_Timestamp(UUID source, Timestamp timestamp) {
+    record SourceUuidTimestamp(UUID source, Timestamp timestamp) {
     }
 }
