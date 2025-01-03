@@ -17,13 +17,13 @@ WORKDIR /build
 
 COPY .m2_repo .m2_repo
 RUN ls -asl .m2_repo
-RUN exit 1
+RUN du -sh .m2_repo
 COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 COPY src src
 
-ARG mvn="./mvnw -Dmaven.repo.local=.m2_repo"
+ARG mvn="./mvnw -X -Dmaven.repo.local=.m2_repo"
 
 RUN $mvn clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
