@@ -23,7 +23,7 @@ COPY .mvn .mvn
 COPY pom.xml .
 COPY src src
 
-ARG mvn="./mvnw -X -Dmaven.repo.local=.m2_repo"
+ARG mvn="./mvnw -Dmaven.repo.local=.m2_repo"
 
 RUN $mvn clean verify
 RUN java -jar target/quarkus-app/quarkus-run.jar -h
