@@ -5,14 +5,14 @@ services:
     volumes:
       - ./moved_attachments:/moved_attachments
   bot:
-#    image: signal-cli
+    #    image: signal-cli
     build:
       context: docker/signal-cli
     user: "1000:1000"
     env_file: .env
     mem_limit: 250m
     volumes:
-      - /home/lars/.local/share/signal-cli:/home/user/.local/share/signal-cli
+      - $HOME/.local/share/signal-cli:/home/user/.local/share/signal-cli
       - ./:/output
   attachment-mover:
     depends_on:
@@ -25,6 +25,6 @@ services:
     user: "1000:1000"
     mem_limit: 90m
     volumes:
-      - /home/lars/.local/share/signal-cli/attachments:/signal_attachments
+      - $HOME/.local/share/signal-cli/attachments:/signal_attachments
       - ./moved_attachments:/moved_attachments
       - ./:/output:ro
