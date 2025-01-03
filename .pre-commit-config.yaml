@@ -2,4 +2,4 @@ repos:
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.22.1
     hooks:
-      - id: gitleaks-docker
+      - id: gitleaks
