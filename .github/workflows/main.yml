@@ -29,7 +29,7 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           path: .m2_repo
       - name: Build and Test with Maven
-        run: ./mvnw -Dmaven.repo.local=.m2_repo -B verify
+        run: ./mvnw -Dmaven.repo.local=.m2_repo -B clean verify
       - name: Docker Setup Docker
         # You may pin to the exact commit or the version.
         # uses: docker/setup-docker-action@370a7dad4b8ce8dbf00f9363e1652e5074dd6abe
