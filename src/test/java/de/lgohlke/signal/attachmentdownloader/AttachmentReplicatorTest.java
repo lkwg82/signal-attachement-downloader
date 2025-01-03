@@ -5,89 +5,81 @@ import de.lgohlke.signal.attachmentdownloader.mapping.DataMessage;
 import de.lgohlke.signal.attachmentdownloader.mapping.Envelope;
 import de.lgohlke.signal.attachmentdownloader.mapping.GroupInfo;
 import de.lgohlke.signal.attachmentdownloader.mapping.Message;
+import lombok.SneakyThrows;
+import lombok.val;
 import org.assertj.core.util.Files;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Date;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
-import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Fail.fail;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AttachmentReplicatorTest {
 
     private final File tempFolder = Files.newTemporaryFolder();
     private final Message message = createTestMessage();
 
-    private Path attachmentsOfSignal;
+    private final Path sourceFolder = tempFolder.toPath()
+                                                .resolve("attachments");
+    private final Path targetFolder = tempFolder.toPath()
+                                                .resolve("new_attachments");
+    private AttachmentReplicator replicator;
 
     @BeforeEach
     void setUp() {
         //noinspection ResultOfMethodCallIgnored
         tempFolder.mkdirs();
-        attachmentsOfSignal = prepareSignalAttachmentPath();
+        //noinspection ResultOfMethodCallIgnored
+        sourceFolder.toFile().mkdirs();
+        replicator = new AttachmentReplicator(sourceFolder, targetFolder);
     }
-
 
     @Test
     void should_hardlink_attachment_instead_of_move() throws IOException {
-        var attachmentsMoved = prepareMovedAttachmentPath();
+        createTestAttachment(sourceFolder, message);
 
-        var movedAttachment = buildMovedAttachmentFile(message,
-                                                       attachmentsOfSignal,
-                                                       attachmentsMoved.resolve("direct"));
+        List<Path> paths = replicator.handle(message);
 
-        // action
-        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
-
-        Object attribute = java.nio.file.Files.getAttribute(movedAttachment.toPath(), "unix:nlink");
-        int hardlinks = Integer.valueOf("" + attribute);
+        Object attribute = java.nio.file.Files.getAttribute(paths.getFirst(), "unix:nlink");
+        int hardlinks = Integer.parseInt("" + attribute);
         assertThat(hardlinks).isEqualTo(2);
     }
 
     @Test
     void should_move_attachment_from_direct_message() throws IOException {
-        var attachmentsMoved = prepareMovedAttachmentPath();
+        createTestAttachment(sourceFolder, message);
 
-        var movedAttachment = buildMovedAttachmentFile(message,
-                                                       attachmentsOfSignal,
-                                                       attachmentsMoved.resolve("direct"));
+        var paths = replicator.handle(message);
 
-        // action
-        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
-
-        assertThat(movedAttachment).exists();
-        assertThat(movedAttachment).isFile();
+        assertThat(paths.getFirst()).exists();
+        assertThat(paths.getFirst().toFile()).isFile();
     }
 
     @Test
     void should_accept_already_moved_attachment() throws IOException {
-        var attachmentsMoved = prepareMovedAttachmentPath();
-        var attachment = createTestAttachment(attachmentsOfSignal, message);
+        var attachment = createTestAttachment(sourceFolder, message);
 
-        String filename = buildMovedFilename(message, attachment);
-        var movedAttachment = attachmentsMoved.resolve("direct")
-                                              .resolve(message.getEnvelope()
-                                                              .getSourceUuid().toString())
-                                              .resolve(filename)
-                                              .toFile();
+        String filename = buildReplicatedFilename(message, attachment);
+        var movedAttachment = targetFolder.resolve("direct")
+                                          .resolve(message.getEnvelope()
+                                                          .getSourceUuid().toString())
+                                          .resolve(filename)
+                                          .toFile();
 
-        moveAttachmentToMovedFolder(attachmentsOfSignal, attachment, movedAttachment);
+        moveAttachmentToMovedFolder(sourceFolder, attachment, movedAttachment);
 
         // action
-        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
+        List<Path> paths = replicator.handle(message);
 
-        assertThat(movedAttachment).exists();
-        assertThat(movedAttachment).isFile();
+        assertThat(paths.getFirst()).exists();
+        assertThat(paths.getFirst().toFile()).isFile();
     }
 
     @Test
@@ -98,120 +90,90 @@ public class AttachmentReplicatorTest {
         message.getEnvelope()
                .getDataMessage()
                .setGroupInfo(groupInfo);
+        Attachment testAttachment = createTestAttachment(sourceFolder, message);
+        message.getEnvelope().getDataMessage().setAttachments(List.of(testAttachment));
 
-        var attachmentsMoved = prepareMovedAttachmentPath();
-        var attachment = createTestAttachment(attachmentsOfSignal, message);
+        List<Path> paths = replicator.handle(message);
 
-        var movedAttachment = buildMovedAttachmentFileForGroup(groupInfo, attachmentsMoved, attachment);
-
-        // action
-        new AttachmentReplicator(attachmentsOfSignal, attachmentsMoved).handle(message);
-
-        assertThat(movedAttachment).exists();
-        assertThat(movedAttachment).isFile();
+        assertThat(paths.getFirst()).exists();
+        assertThat(paths.getFirst().toFile()).isFile();
     }
 
     @Test
     void should_fail_on_wrong_signal_attachment_dir() {
-        try {
-            new AttachmentReplicator(Path.of("a"), Path.of("b"));
-            fail("should fail");
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).startsWith("could not find signal attachment path:");
-        }
+        Path source = Path.of("a");
+        Path target = Path.of("b");
+
+        assertThatThrownBy(() -> new AttachmentReplicator(source, target))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("could not find signal attachment path:");
     }
 
+    @SneakyThrows
     @Test
     void should_fail_on_when_signal_attachment_dir_is_no_dir() {
-        try {
-            var file = tempFolder.toPath()
-                                 .resolve("a")
-                                 .toFile();
-            file.createNewFile();
+        var file = tempFolder.toPath()
+                             .resolve("a")
+                             .toFile();
+        //noinspection ResultOfMethodCallIgnored
+        file.createNewFile();
 
-            new AttachmentReplicator(file.toPath(), Path.of("b"));
-            fail("should fail");
-        } catch (IllegalArgumentException | IOException e) {
-            assertThat(e.getMessage()).startsWith("signal attachment path should be a directory");
-        }
+        val sourceFolder = file.toPath();
+        val targetFolder = Path.of("b");
+
+        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, targetFolder))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("signal attachment path should be a directory");
     }
 
+    @SneakyThrows
     @Test
     void should_fail_on_when_moved_attachment_dir_is_no_dir() {
-        try {
-            var attachmentsOfSignal = tempFolder.toPath()
-                                                .resolve("a")
-                                                .toFile();
+        var target = tempFolder.toPath()
+                               .resolve("b")
+                               .toFile();
+        //noinspection ResultOfMethodCallIgnored
+        target.createNewFile();
 
-            attachmentsOfSignal.mkdir();
-
-            var file = tempFolder.toPath()
-                                 .resolve("b")
-                                 .toFile();
-            file.createNewFile();
-
-            new AttachmentReplicator(attachmentsOfSignal.toPath(), file.toPath());
-            fail("should fail");
-        } catch (IllegalArgumentException | IOException e) {
-            assertThat(e.getMessage()).startsWith("moved attachment path should be a directory");
-        }
+        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, target.toPath()))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("moved attachment path should be a directory");
     }
 
     @Test
     void should_detect_same_paths() {
-        try {
-            new AttachmentReplicator(Path.of("a"), Path.of("a"));
-            fail("should fail");
-        } catch (IllegalArgumentException e) {
-            assertThat(e.getMessage()).startsWith("paths should be different");
-        }
-    }
-
-    private File buildMovedAttachmentFile(Message message, Path attachmentsOfSignal, Path attachmentsMoved) throws IOException {
-        var attachment = createTestAttachment(attachmentsOfSignal, message);
-        String filename = buildMovedFilename(message, attachment);
-        return attachmentsMoved.resolve(message.getEnvelope()
-                                               .getSourceUuid().toString())
-                               .resolve(filename)
-                               .toFile();
+        assertThatThrownBy(() -> new AttachmentReplicator(sourceFolder, sourceFolder))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("paths should be different");
     }
 
     private void moveAttachmentToMovedFolder(Path attachmentsOfSignal, Attachment attachment, File movedAttachment) throws IOException {
-        var sourcePath = attachmentsOfSignal.resolve(attachment.getId() + "");
+        var sourcePath = attachmentsOfSignal.resolve(attachment.getId());
+        //noinspection ResultOfMethodCallIgnored
         movedAttachment.getParentFile()
                        .mkdirs();
         java.nio.file.Files.move(sourcePath, movedAttachment.toPath());
         assertThat(sourcePath).doesNotExist();
     }
 
-    private String buildMovedFilename(Message message, Attachment attachment) {
-        SimpleDateFormat dformat = new SimpleDateFormat("yyyy-MM-dd");
+    private String buildReplicatedFilename(Message message, Attachment attachment) {
         var timestamp = message.getEnvelope()
                                .getDataMessage()
                                .getTimestamp();
 
-        return dformat.format(new Date(timestamp.getTime())) + "_" + attachment.getId();
-    }
-
-    private Path prepareMovedAttachmentPath() {
-        return tempFolder.toPath()
-                         .resolve("new_attachments");
-    }
-
-    private Path prepareSignalAttachmentPath() {
-        var attachmentsOfSignal = tempFolder.toPath()
-                                            .resolve("attachments");
-        attachmentsOfSignal.toFile()
-                           .mkdirs();
-        return attachmentsOfSignal;
+        TargetAttachmentFilename targetAttachmentFilename = new TargetAttachmentFilename(timestamp, attachment.getId());
+        return targetAttachmentFilename.createFilename();
     }
 
     private Attachment createTestAttachment(Path attachmentsOfSignal, Message message) throws IOException {
         var attachment = new Attachment();
         attachment.setFilename("IMG_01.jpg");
         attachment.setId("3149734190872347104.jpg");
-        var attachmentFile = attachmentsOfSignal.resolve(attachment.getId() + "")
+        var attachmentFile = attachmentsOfSignal.resolve(attachment.getId())
                                                 .toFile();
+        //noinspection ResultOfMethodCallIgnored
+        attachmentFile.getParentFile().mkdirs();
+        //noinspection ResultOfMethodCallIgnored
         attachmentFile.createNewFile();
 
         var dataMessage = message.getEnvelope()
@@ -236,18 +198,5 @@ public class AttachmentReplicatorTest {
                           .getGroupInfo()).isNull();
 
         return message;
-    }
-
-    private File buildMovedAttachmentFileForGroup(GroupInfo groupInfo, Path attachmentsMoved, Attachment attachment) {
-        String filename = buildMovedFilename(message, attachment);
-        var base64GroupId = Base64.getEncoder()
-                                  .encodeToString(groupInfo.getGroupId()
-                                                           .getBytes(StandardCharsets.UTF_8));
-        var movedAttachment = attachmentsMoved.resolve("groups")
-                                              .resolve(base64GroupId)
-                                              .resolve("f0856790-6342-4610-a018-1588e741155e")
-                                              .resolve(filename)
-                                              .toFile();
-        return movedAttachment;
     }
 }
