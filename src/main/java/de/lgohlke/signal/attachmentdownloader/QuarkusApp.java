@@ -14,8 +14,6 @@ public class QuarkusApp implements QuarkusApplication {
 
     public static void main(String... args) {
         String[] _args = new String[]{
-                "--map-reaction-to-subfolder=👍=keep_it",
-                "--map-reaction-to-subfolder=🎁=calendar",
                 "--messages-log=messages.log",
                 "--messages-log=messages.log.1",
                 "--messages-log=messages.log.2",
