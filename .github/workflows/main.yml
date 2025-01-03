@@ -3,8 +3,13 @@ name: Java CI
 permissions:
   contents: read
   pull-requests: write
-  
-on: [ push ]
+
+on:
+  push:
+    paths-ignore:
+      - renovate.json5
+      - renovate.json
+      - README.md
 
 jobs:
   build:
