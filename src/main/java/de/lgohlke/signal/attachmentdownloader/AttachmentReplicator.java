@@ -74,10 +74,6 @@ public class AttachmentReplicator {
     }
 
     private static void moveAttachment(Path sourceFile, Path targetFile) throws IOException {
-//        if (!sourceFile.toFile().exists()) {
-//            throw new IllegalArgumentException(sourceFile + " is missing");
-//        }
-        System.out.println("target file: " + targetFile);
         if (targetFile.toFile()
                       .exists()) {
             log.info("already moved {} to {}", sourceFile, targetFile);
