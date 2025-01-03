@@ -39,7 +39,7 @@ function ok() {
   ok
 )
 
-mvnd -Dmaven.repo.local=.m2_repo clean verify
+#mvnd -Dmaven.repo.local=.m2_repo clean verify
 docker build -t attachment-mover-java -f docker/attachment-mover-java/Dockerfile .
 
 log=$(mktemp)
@@ -49,9 +49,10 @@ if ! docker run --rm -ti --entrypoint java attachment-mover-java -jar quarkus-ru
   exit 1
 fi
 
-
-docker compose up --build bot
-docker compose up --build attachment-mover
+if [[ -z "$CI" ]]; then
+  docker compose up --build bot
+  docker compose up --build attachment-mover
+fi
 
 if [[ -n $RELEASE ]]; then
   timestamp=$(date "+%Y%m%d-%H%M%S")
