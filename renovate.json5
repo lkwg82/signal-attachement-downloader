@@ -4,6 +4,9 @@
     'config:recommended',
     'helpers:pinGitHubActionDigests',
   ],
+  "pre-commit": {
+    "enabled": true
+  },
   customManagers: [
     {
       customType: 'regex',
