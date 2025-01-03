@@ -190,12 +190,12 @@ public class AttachmentReplicatorTest {
         envelope.setSourceUuid(UUID.fromString("f0856790-6342-4610-a018-1588e741155e"));
 
         envelope.setDataMessage(new DataMessage());
-        var _message = new Message();
-        _message.setEnvelope(envelope);
+        var localMessage = new Message();
+        localMessage.setEnvelope(envelope);
 
         assertThat(envelope.getDataMessage()
                            .getGroupInfo()).isNull();
 
-        return _message;
+        return localMessage;
     }
 }
