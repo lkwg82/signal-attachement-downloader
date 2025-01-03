@@ -29,4 +29,4 @@ jobs:
         # Enable Docker rootless mode
         # rootless: # optional, default is false
       - name: Build and Test run.sh
-        run: ./run.sh
+        run: DEBUG=1 ./run.sh
