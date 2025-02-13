@@ -12,7 +12,7 @@
       "matchUpdateTypes": ["minor", "patch", "digest"],
       "automerge": true
     }
-  ]
+  ],
   customManagers: [
     {
       customType: 'regex',
