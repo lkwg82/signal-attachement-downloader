@@ -1,4 +1,4 @@
-FROM alpine/curl:8.12.0 AS signal_cli_download
+FROM alpine/curl:8.12.1 AS signal_cli_download
 
 # based on https://www.redcube.de/update-version-in-variables-or-buildargs-in-dockerfiles-with-renovatebot/
 # renovate: datasource=github-releases depName=AsamK/signal-cli extractVersion=^v(?<version>.*)$
