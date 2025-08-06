@@ -29,7 +29,7 @@ docker_assets=$(mktemp)
 
 function tag_and_push(){
   cat <<EOF >> "$docker_assets"
-\`docker pull $2\` ($(docker images "$1" --format "{{.Size}}"))
+\`docker pull $2\` ($(docker images "$1" --format "{{.Size}}" | head -n1 ))
 EOF
   $dry_run docker tag "$1" "$2"
   $dry_run echo "pushing $2"
