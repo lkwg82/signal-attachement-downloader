@@ -8,11 +8,11 @@ ENV SIGNAL_CLI_URL="https://github.com/AsamK/signal-cli/releases/download/v${SIG
 RUN curl --silent --location $SIGNAL_CLI_URL | tar -xvzf - -C /usr/bin \
     && touch -mt 197001010101 -at 197001010101 /usr/bin/signal-cli
 
-FROM debian:12-slim AS qrencode
+FROM debian:13-slim AS qrencode
 
 RUN apt-get update && apt-get install -y  qrencode
 
-FROM debian:12-slim
+FROM debian:13-slim
 
 COPY --from=signal_cli_download /usr/bin/signal-cli /usr/bin
 COPY --from=qrencode /usr/bin/qrencode /usr/bin
