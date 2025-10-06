@@ -2,7 +2,7 @@ FROM alpine/curl:8.14.1 AS signal_cli_download
 
 # based on https://www.redcube.de/update-version-in-variables-or-buildargs-in-dockerfiles-with-renovatebot/
 # renovate: datasource=github-releases depName=AsamK/signal-cli extractVersion=^v(?<version>.*)$
-ENV SIGNAL_CLI_VERSION=0.13.18
+ENV SIGNAL_CLI_VERSION=0.13.20
 ENV SIGNAL_CLI_URL="https://github.com/AsamK/signal-cli/releases/download/v${SIGNAL_CLI_VERSION}/signal-cli-${SIGNAL_CLI_VERSION}-Linux-native.tar.gz"
 
 RUN curl --silent --location $SIGNAL_CLI_URL | tar -xvzf - -C /usr/bin \
